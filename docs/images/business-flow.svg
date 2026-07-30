@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Business flow from machine print events to operations decisions</title>
+  <desc id="desc">A six-stage business flow showing machine printing, event capture, trusted data, KPI calculation, Power BI monitoring, and operational action, followed by verified project outcomes.</desc>
+
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071426"/>
+      <stop offset="55%" stop-color="#0c2238"/>
+      <stop offset="100%" stop-color="#102b45"/>
+    </linearGradient>
+    <linearGradient id="headerGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="actionGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.20"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#7dd3fc"/>
+    </marker>
+    <style>
+      .title { font-family: Arial, Helvetica, sans-serif; font-size: 40px; font-weight: 700; fill: #f8fafc; letter-spacing: -0.6px; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; fill: #b9d4e8; }
+      .lane { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 700; fill: #7dd3fc; letter-spacing: 1.8px; }
+      .step-number { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 700; fill: #082f49; }
+      .step-title { font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; fill: #f8fafc; }
+      .step-copy { font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 400; fill: #b9d4e8; }
+      .kpi-value { font-family: Arial, Helvetica, sans-serif; font-size: 26px; font-weight: 700; fill: #f8fafc; }
+      .kpi-label { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: 500; fill: #a9c5d9; letter-spacing: 0.2px; }
+      .outcome-title { font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 700; fill: #d1fae5; }
+      .outcome-copy { font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 400; fill: #a7f3d0; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#background)"/>
+  <circle cx="1425" cy="-70" r="340" fill="#38bdf8" opacity="0.06"/>
+  <circle cx="90" cy="880" r="290" fill="#34d399" opacity="0.05"/>
+  <rect x="54" y="48" width="1492" height="116" rx="26" fill="url(#headerGlow)" stroke="#274763"/>
+
+  <text x="88" y="102" class="title">From Print Events to Better Operations</text>
+  <text x="88" y="139" class="subtitle">A business view of how machine data becomes trusted KPIs and daily action</text>
+
+  <text x="88" y="218" class="lane">OPERATION → INSIGHT → ACTION</text>
+  <line x1="88" y1="234" x2="1512" y2="234" stroke="#31546f" stroke-width="2"/>
+
+  <!-- Connecting flow -->
+  <path d="M 318 398 H 348" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 558 398 H 588" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 798 398 H 828" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 1038 398 H 1068" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 1278 398 H 1308" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <!-- Step 1 -->
+  <g filter="url(#shadow)">
+    <rect x="88" y="276" width="230" height="244" rx="24" fill="#102c46" stroke="#2b5a78" stroke-width="2"/>
+    <circle cx="124" cy="313" r="19" fill="#7dd3fc"/>
+    <text x="124" y="319" text-anchor="middle" class="step-number">1</text>
+    <g transform="translate(172 321)" fill="none" stroke="#7dd3fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="-30" y="-25" width="60" height="45" rx="8"/>
+      <path d="M -20 20 V 38 H 20 V 20"/>
+      <path d="M -15 -10 H 15 M -15 2 H 8"/>
+      <circle cx="18" cy="5" r="3" fill="#7dd3fc" stroke="none"/>
+    </g>
+    <text x="113" y="394" class="step-title">Print &amp; scan</text>
+    <text x="113" y="424" class="step-copy">Machines print QR-coded</text>
+    <text x="113" y="448" class="step-copy">beverage cans and record</text>
+    <text x="113" y="472" class="step-copy">quality outcomes.</text>
+  </g>
+
+  <!-- Step 2 -->
+  <g filter="url(#shadow)">
+    <rect x="348" y="276" width="210" height="244" rx="24" fill="#102c46" stroke="#2b5a78" stroke-width="2"/>
+    <circle cx="384" cy="313" r="19" fill="#7dd3fc"/>
+    <text x="384" y="319" text-anchor="middle" class="step-number">2</text>
+    <g transform="translate(453 321)" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round">
+      <path d="M -28 -22 H 18 L 30 -10 V 34 H -28 Z"/>
+      <path d="M 18 -22 V -10 H 30"/>
+      <path d="M -15 0 H 15 M -15 12 H 15 M -15 24 H 7"/>
+    </g>
+    <text x="373" y="394" class="step-title">Capture events</text>
+    <text x="373" y="424" class="step-copy">Machine API responses are</text>
+    <text x="373" y="448" class="step-copy">collected with source timing</text>
+    <text x="373" y="472" class="step-copy">and traceability intact.</text>
+  </g>
+
+  <!-- Step 3 -->
+  <g filter="url(#shadow)">
+    <rect x="588" y="276" width="210" height="244" rx="24" fill="#102c46" stroke="#2b5a78" stroke-width="2"/>
+    <circle cx="624" cy="313" r="19" fill="#7dd3fc"/>
+    <text x="624" y="319" text-anchor="middle" class="step-number">3</text>
+    <g transform="translate(693 321)" fill="none" stroke="#a78bfa" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="0" cy="-20" rx="30" ry="11"/>
+      <path d="M -30 -20 V 25 C -30 31 -17 36 0 36 C 17 36 30 31 30 25 V -20"/>
+      <path d="M -30 1 C -30 7 -17 12 0 12 C 17 12 30 7 30 1"/>
+      <path d="M -30 18 C -30 24 -17 29 0 29 C 17 29 30 24 30 18"/>
+    </g>
+    <text x="613" y="394" class="step-title">Trust the data</text>
+    <text x="613" y="424" class="step-copy">Raw events are preserved,</text>
+    <text x="613" y="448" class="step-copy">standardized and prepared</text>
+    <text x="613" y="472" class="step-copy">for consistent analysis.</text>
+  </g>
+
+  <!-- Step 4 -->
+  <g filter="url(#shadow)">
+    <rect x="828" y="276" width="210" height="244" rx="24" fill="#102c46" stroke="#2b5a78" stroke-width="2"/>
+    <circle cx="864" cy="313" r="19" fill="#7dd3fc"/>
+    <text x="864" y="319" text-anchor="middle" class="step-number">4</text>
+    <g transform="translate(933 321)" fill="none" stroke="#fbbf24" stroke-width="4" stroke-linecap="round">
+      <path d="M -30 32 V 10 M -10 32 V -4 M 10 32 V -20 M 30 32 V -10"/>
+      <path d="M -36 32 H 36"/>
+      <path d="M -28 1 L -10 -12 L 9 -27 L 30 -18"/>
+    </g>
+    <text x="853" y="394" class="step-title">Calculate KPIs</text>
+    <text x="853" y="424" class="step-copy">Daily success, rejection,</text>
+    <text x="853" y="448" class="step-copy">QR grade and position error</text>
+    <text x="853" y="472" class="step-copy">become decision metrics.</text>
+  </g>
+
+  <!-- Step 5 -->
+  <g filter="url(#shadow)">
+    <rect x="1068" y="276" width="210" height="244" rx="24" fill="#102c46" stroke="#2b5a78" stroke-width="2"/>
+    <circle cx="1104" cy="313" r="19" fill="#7dd3fc"/>
+    <text x="1104" y="319" text-anchor="middle" class="step-number">5</text>
+    <g transform="translate(1173 321)" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="-34" y="-25" width="68" height="51" rx="6"/>
+      <path d="M -21 13 V 1 M -5 13 V -10 M 11 13 V 5 M 26 13 V -16"/>
+      <path d="M -9 36 H 9 M 0 26 V 36"/>
+    </g>
+    <text x="1093" y="394" class="step-title">Monitor daily</text>
+    <text x="1093" y="424" class="step-copy">A single operations view</text>
+    <text x="1093" y="448" class="step-copy">shows performance, quality</text>
+    <text x="1093" y="472" class="step-copy">and daily detail together.</text>
+  </g>
+
+  <!-- Step 6 -->
+  <g filter="url(#shadow)">
+    <rect x="1308" y="276" width="204" height="244" rx="24" fill="url(#actionGradient)" stroke="#34d399" stroke-width="2"/>
+    <circle cx="1344" cy="313" r="19" fill="#a7f3d0"/>
+    <text x="1344" y="319" text-anchor="middle" class="step-number">6</text>
+    <g transform="translate(1410 321)" fill="none" stroke="#d1fae5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="0" cy="0" r="30"/>
+      <path d="M -14 0 L -3 12 L 17 -14"/>
+    </g>
+    <text x="1333" y="394" class="step-title">Act &amp; improve</text>
+    <text x="1333" y="424" class="step-copy">Teams target rejects, tune</text>
+    <text x="1333" y="448" class="step-copy">print quality and track</text>
+    <text x="1333" y="472" class="step-copy">operational improvement.</text>
+  </g>
+
+  <!-- Outcomes -->
+  <rect x="88" y="574" width="1424" height="238" rx="28" fill="#0b2034" stroke="#31546f" stroke-width="2" filter="url(#softShadow)"/>
+  <text x="120" y="620" class="lane">VERIFIED MVP OUTCOMES</text>
+
+  <g>
+    <rect x="120" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
+    <text x="230" y="699" text-anchor="middle" class="kpi-value">5,760</text>
+    <text x="230" y="730" text-anchor="middle" class="kpi-label">TOTAL PRINT EVENTS</text>
+  </g>
+  <g>
+    <rect x="358" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
+    <text x="468" y="699" text-anchor="middle" class="kpi-value">90.71%</text>
+    <text x="468" y="730" text-anchor="middle" class="kpi-label">SUCCESS RATE</text>
+  </g>
+  <g>
+    <rect x="596" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
+    <text x="706" y="699" text-anchor="middle" class="kpi-value">0.91</text>
+    <text x="706" y="730" text-anchor="middle" class="kpi-label">AVG QR GRADE SCORE</text>
+  </g>
+  <g>
+    <rect x="834" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
+    <text x="944" y="699" text-anchor="middle" class="kpi-value">0.194 mm</text>
+    <text x="944" y="730" text-anchor="middle" class="kpi-label">AVG POSITION ERROR</text>
+  </g>
+  <g>
+    <rect x="1072" y="648" width="408" height="118" rx="18" fill="#0f3d3a" stroke="#2dd4bf"/>
+    <text x="1100" y="690" class="outcome-title">One trusted operations view</text>
+    <text x="1100" y="720" class="outcome-copy">Daily machine and product performance with</text>
+    <text x="1100" y="744" class="outcome-copy">traceable detail for faster investigation.</text>
+  </g>
+
+  <text x="88" y="858" class="kpi-label">AZURE-NATIVE DATA ENGINEERING UI  •  BUSINESS FLOW  •  VERIFIED 31 JUL 2026</text>
+</svg>

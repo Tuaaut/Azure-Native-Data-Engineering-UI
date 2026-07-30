@@ -1,0 +1,51 @@
+/*
+Power BI semantic model: sm_gold_print_event_kpis_daily
+Table: vw_gold_print_event_kpis_daily
+Display folder for every measure: DAX Measures
+
+Create each measure in the Power BI web semantic-model editor.
+The DEFINE/EVALUATE wrapper makes this file executable as a DAX validation query;
+persist the seven measure expressions in the model itself.
+*/
+
+DEFINE
+    MEASURE 'vw_gold_print_event_kpis_daily'[Total Events] =
+        SUM('vw_gold_print_event_kpis_daily'[total_events])
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Successful Events] =
+        SUM('vw_gold_print_event_kpis_daily'[successful_events])
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Rejected Events] =
+        SUM('vw_gold_print_event_kpis_daily'[rejected_events])
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Success Rate %] =
+        DIVIDE(
+            [Successful Events],
+            [Total Events],
+            0
+        )
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Reject Rate %] =
+        DIVIDE(
+            [Rejected Events],
+            [Total Events],
+            0
+        )
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Average Daily QR Grade Score] =
+        AVERAGE('vw_gold_print_event_kpis_daily'[avg_qr_grade_score])
+
+    MEASURE 'vw_gold_print_event_kpis_daily'[Average Daily Position Error (mm)] =
+        AVERAGE('vw_gold_print_event_kpis_daily'[avg_abs_position_error_mm])
+
+EVALUATE
+ROW(
+    "Total Events", [Total Events],
+    "Successful Events", [Successful Events],
+    "Rejected Events", [Rejected Events],
+    "Success Rate %", [Success Rate %],
+    "Reject Rate %", [Reject Rate %],
+    "Average Daily QR Grade Score", [Average Daily QR Grade Score],
+    "Average Daily Position Error (mm)", [Average Daily Position Error (mm)]
+)
+

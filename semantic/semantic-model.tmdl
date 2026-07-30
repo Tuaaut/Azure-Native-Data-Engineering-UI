@@ -1,0 +1,39 @@
+// Showcase TMDL representation of the measures created in the Power BI UI.
+// Import this only into a compatible Power BI semantic-model project.
+
+table vw_gold_print_event_kpis_daily
+
+    measure 'Total Events' =
+            SUM ( vw_gold_print_event_kpis_daily[total_events] )
+        formatString: #,0
+        displayFolder: "DAX Measures"
+
+    measure 'Successful Events' =
+            SUM ( vw_gold_print_event_kpis_daily[successful_events] )
+        formatString: #,0
+        displayFolder: "DAX Measures"
+
+    measure 'Rejected Events' =
+            SUM ( vw_gold_print_event_kpis_daily[rejected_events] )
+        formatString: #,0
+        displayFolder: "DAX Measures"
+
+    measure 'Success Rate %' =
+            DIVIDE ( [Successful Events], [Total Events], 0 )
+        formatString: 0.00%
+        displayFolder: "DAX Measures"
+
+    measure 'Reject Rate %' =
+            DIVIDE ( [Rejected Events], [Total Events], 0 )
+        formatString: 0.00%
+        displayFolder: "DAX Measures"
+
+    measure 'Average Daily QR Grade Score' =
+            AVERAGE ( vw_gold_print_event_kpis_daily[avg_qr_grade_score] )
+        formatString: 0.00
+        displayFolder: "DAX Measures"
+
+    measure 'Average Daily Position Error (mm)' =
+            AVERAGE ( vw_gold_print_event_kpis_daily[avg_abs_position_error_mm] )
+        formatString: 0.000
+        displayFolder: "DAX Measures"
