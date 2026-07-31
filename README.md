@@ -45,6 +45,7 @@ Synapse -> sm_gold_print_event_kpis_daily -> rpt_print_event_kpis_daily
 | Container | `datalake` | Raw and medallion data |
 | Azure Data Factory | `adf-qr-de-native-ui-740561` | Batch ingestion |
 | ADF pipeline | `pl_ingest_machine_api_json` | Incrementally copies machine API JSON to Raw using a last-modified UTC window |
+| ADF trigger | `tr_daily_machine_api_incremental` | Stopped 24-hour tumbling window for future automated ingestion |
 | Synapse workspace | `syn-qr-de-native-ui-740561` | Serverless SQL transformation and serving |
 | Power BI linked service | `ls_powerbi_qr_native_demo` | Synapse-to-Power BI workspace link |
 | Power BI workspace | `syn-qr-de-native-ui-740561` | BI artifacts |
@@ -181,6 +182,21 @@ The template must be updated with the actual event date, Raw ingestion-folder
 pattern, and unique run ID before execution. CETAS output locations cannot be
 reused. The stable Gold view recursively reads Parquet below
 `gold/print_event_kpis_daily/`, so the semantic model keeps the same source view.
+
+The published trigger configuration is:
+
+```text
+Name:             tr_daily_machine_api_incremental
+Type:             Tumbling window
+Frequency:        Every 24 hours
+Start:            2026-08-02 00:00:00 UTC
+Max concurrency:  1
+Retry:            1 after 60 seconds
+Runtime state:    Stopped
+```
+
+The trigger maps `windowStartTime` and `windowEndTime` to the two pipeline
+parameters. Keep it stopped until recurring source delivery is ready.
 
 ## 7. Gold reporting schema
 
@@ -363,6 +379,7 @@ Avoid refreshing Power BI when the Gold data has not changed.
 - No Dedicated SQL pool.
 - Parquet used after Raw to reduce scanned data.
 - Manual pipeline execution during testing.
+- Daily tumbling-window trigger published but intentionally stopped.
 - Manual semantic-model refresh during testing.
 - No Power BI app creation for the MVP.
 - No scheduled refresh while the source remains static.
@@ -451,6 +468,7 @@ Azure-Native-Data-Engineering-UI/
 - [x] Add DAX and TMDL semantic-model scripts
 - [x] Add Business and Technical SVG architecture diagrams
 - [x] Parameterize ADF ingestion by source last-modified UTC window
+- [x] Add a stopped daily tumbling-window trigger with parameter mapping
 - [x] Add incremental date-partition template
 - [x] Create stable recursive Gold reporting view
 - [ ] Optionally export the ADF pipeline JSON
