@@ -1,12 +1,11 @@
-/*
-Create reporting-ready daily KPIs from the verified Silver run.
-*/
+USE qr_native_lakehouse;
+GO
 
-CREATE EXTERNAL TABLE dbo.gold_print_event_kpis_daily_run_20260731_01
+CREATE EXTERNAL TABLE dbo.gold_print_event_kpis_daily
 WITH (
-    LOCATION = 'gold/print_event_kpis_daily/run_20260731_01/',
-    DATA_SOURCE = DataLake,
-    FILE_FORMAT = ParquetFormat
+    LOCATION = 'gold/print_event_kpis_daily/run_20260731_01',
+    DATA_SOURCE = ds_datalake,
+    FILE_FORMAT = ff_parquet
 )
 AS
 SELECT
@@ -15,33 +14,42 @@ SELECT
     product_id,
     product_name,
     COUNT_BIG(*) AS total_events,
-    SUM(CAST(is_printed AS bigint)) AS printed_events,
-    SUM(CAST(is_successful AS bigint)) AS successful_events,
-    SUM(CAST(is_rejected AS bigint)) AS rejected_events,
-    SUM(CAST(is_failed AS bigint)) AS failed_events,
-    SUM(CAST(is_qr_read_failure AS bigint)) AS qr_read_failures,
+    SUM(CASE WHEN print_status = 'PRINTED' THEN 1 ELSE 0 END) AS printed_events,
+    SUM(CASE WHEN print_status = 'FAILED' THEN 1 ELSE 0 END) AS failed_events,
+    SUM(CASE WHEN is_reject = 1 THEN 1 ELSE 0 END) AS rejected_events,
+    SUM(CASE WHEN qr_read_success = 0 THEN 1 ELSE 0 END) AS qr_read_failures,
+    SUM(
+        CASE
+            WHEN print_status = 'PRINTED'
+             AND qr_read_success = 1
+             AND is_reject = 0
+            THEN 1 ELSE 0
+        END
+    ) AS successful_events,
     CAST(
-        100.0 * SUM(CAST(is_successful AS decimal(19,4)))
-        / NULLIF(COUNT_BIG(*), 0)
-        AS decimal(9,2)
+        100.0 * SUM(
+            CASE
+                WHEN print_status = 'PRINTED'
+                 AND qr_read_success = 1
+                 AND is_reject = 0
+                THEN 1 ELSE 0
+            END
+        ) / NULLIF(COUNT_BIG(*), 0)
+        AS decimal(9,4)
     ) AS success_rate_pct,
     CAST(
-        100.0 * SUM(CAST(is_rejected AS decimal(19,4)))
+        100.0 * SUM(CASE WHEN is_reject = 1 THEN 1 ELSE 0 END)
         / NULLIF(COUNT_BIG(*), 0)
-        AS decimal(9,2)
+        AS decimal(9,4)
     ) AS reject_rate_pct,
-    CAST(AVG(CAST(qr_grade_score AS decimal(19,6))) AS decimal(10,4))
+    CAST(AVG(CAST(qr_grade_score AS decimal(18,6))) AS decimal(9,4))
         AS avg_qr_grade_score,
-    CAST(AVG(ABS(CAST(position_error_mm AS decimal(19,6)))) AS decimal(10,4))
+    CAST(AVG(ABS(CAST(position_error_mm AS decimal(18,6)))) AS decimal(9,4))
         AS avg_abs_position_error_mm,
     MIN(event_ts) AS first_event_ts,
     MAX(event_ts) AS last_event_ts,
-    SYSUTCDATETIME() AS gold_loaded_utc
-FROM OPENROWSET(
-    BULK = 'silver/print_events/run_20260731_01/*.parquet',
-    DATA_SOURCE = 'DataLake',
-    FORMAT = 'PARQUET'
-) AS silver
+    CAST(SYSUTCDATETIME() AS datetime2(0)) AS gold_loaded_utc
+FROM dbo.silver_print_events
 GROUP BY
     event_date,
     machine_id,
@@ -50,10 +58,5 @@ GROUP BY
 GO
 
 SELECT *
-FROM OPENROWSET(
-    BULK = 'gold/print_event_kpis_daily/run_20260731_01/*.parquet',
-    DATA_SOURCE = 'DataLake',
-    FORMAT = 'PARQUET'
-) AS gold
+FROM dbo.gold_print_event_kpis_daily
 ORDER BY event_date, machine_id, product_id;
-
