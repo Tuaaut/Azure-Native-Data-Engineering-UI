@@ -328,6 +328,11 @@ Visual standards:
 
 Final Reading view and lineage were visually checked on 2026-07-31.
 
+![Power BI Print Event Operations Overview](docs/images/power-bi-report.jpg)
+
+*Power BI Reading view showing KPI cards, daily quality comparison, and the
+daily operations detail table.*
+
 ### KPI cards
 
 | KPI | Verified value |
@@ -418,6 +423,7 @@ Azure-Native-Data-Engineering-UI/
 ├── docs/
 │   └── images/
 │       ├── business-flow.svg
+│       ├── power-bi-report.jpg
 │       └── technical-flow.svg
 ```
 
