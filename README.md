@@ -3,7 +3,6 @@
 > Source of truth for the Azure-native batch data engineering and Power BI demonstration project.
 
 **Status:** MVP complete  
-**Last verified:** 2026-08-02
 **Implementation style:** Azure portal and service UIs  
 **Cost strategy:** Serverless daily orchestration; no Spark or Dedicated SQL pool
 
@@ -83,9 +82,9 @@ Raw ingestion copies `machine_api_response.json` files from the shared source la
 datalake/raw/machine_api/<timestamp>/
 ```
 
-The current lake contains three unique event dates. Duplicate source deliveries
-are retained in Bronze for lineage, while Silver deduplicates them by
-`event_id`. The reporting layers currently contain 8,640 unique events.
+Duplicate source deliveries are retained in Bronze for lineage, while Silver
+deduplicates them by `event_id`. Gold and Power BI therefore expose evolving
+business-event totals without double-counting repeated source deliveries.
 
 ## 5. Medallion responsibilities
 
@@ -187,7 +186,6 @@ Name:          tr_daily_machine_api_schedule_1200_bkk
 Type:          Schedule
 Frequency:     Daily at 12:00
 Time zone:     SE Asia Standard Time
-Start:         2026-08-03 12:00 Asia/Bangkok
 Runtime state: Started
 ```
 
@@ -322,31 +320,17 @@ Visual standards:
 
 ## 9. Report output
 
-The report and lineage are published in the Power BI workspace.
+The report and lineage are published in the Power BI workspace. KPI totals and
+available event dates evolve automatically as scheduled source deliveries are
+processed.
 
 ![Power BI Print Event Operations Overview](docs/images/power-bi-report.jpg)
 
-*Power BI Reading view showing the original two-day KPI baseline. The current
-semantic model also includes the 2026-08-01 daily partition documented below.*
+*Power BI Reading view illustrating the report layout. Values in the live
+report reflect the latest successfully processed Gold partitions.*
 
-### KPI cards
-
-| KPI | Verified value |
-|---|---:|
-| Total Events | 8,640 |
-| Successful Events | 7,826 |
-| Rejected Events | 814 |
-| Success Rate | 90.58% |
-| Reject Rate | 9.42% |
-
-### Daily detail
-
-| Date | Machine | Product | Total | Successful | Rejected | Success rate | Reject rate |
-|---|---|---|---:|---:|---:|---:|---:|
-| 2026-06-19 | M01 | Cola Can 330ml | 2,880 | 2,612 | 268 | 90.69% | 9.31% |
-| 2026-06-20 | M01 | Cola Can 330ml | 2,880 | 2,613 | 267 | 90.73% | 9.27% |
-| 2026-08-01 | M01 | Cola Can 330ml | 2,880 | 2,601 | 279 | 90.31% | 9.69% |
-| **Total** |  |  | **8,640** | **7,826** | **814** | **90.58%** | **9.42%** |
+The report presents total, successful, and rejected events; success and reject
+rates; QR quality indicators; daily comparisons; and machine/product detail.
 
 ## 10. Daily orchestration
 
