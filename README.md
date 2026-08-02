@@ -3,9 +3,9 @@
 > Source of truth for the Azure-native batch data engineering and Power BI demonstration project.
 
 **Status:** MVP complete  
-**Last verified:** 2026-08-01
+**Last verified:** 2026-08-02
 **Implementation style:** Azure portal and service UIs  
-**Cost strategy:** Serverless and manual execution; no Spark or Dedicated SQL pool
+**Cost strategy:** Serverless daily orchestration; no Spark or Dedicated SQL pool
 
 ## 1. Project objective
 
@@ -18,6 +18,7 @@ Build a cost-conscious Azure-native data engineering workflow that:
 5. Exposes a Gold reporting view.
 6. Serves reusable DAX measures through a Power BI semantic model.
 7. Presents a one-page operations report for print-event KPIs.
+8. Runs ingestion, transformation, and semantic-model refresh on coordinated Bangkok-time schedules.
 
 ## 2. Architecture
 
@@ -43,10 +44,12 @@ Synapse -> sm_gold_print_event_kpis_daily -> rpt_print_event_kpis_daily
 | Azure budget | USD 10/month | Cost guardrail |
 | ADLS Gen2 | `stqrdenativeui740561` | Data lake storage |
 | Container | `datalake` | Raw and medallion data |
+| Shared source function | `func-qr-daily-740561` | Writes one timestamped machine API JSON delivery to the shared source lake each day |
 | Azure Data Factory | `adf-qr-de-native-ui-740561` | Batch ingestion |
 | ADF pipeline | `pl_ingest_machine_api_json` | Incrementally copies machine API JSON to Raw using a last-modified UTC window |
-| ADF trigger | `tr_daily_machine_api_incremental` | Stopped 24-hour tumbling window for future automated ingestion |
+| ADF trigger | `tr_daily_machine_api_schedule_1200_bkk` | Active daily schedule at 12:00 Asia/Bangkok |
 | Synapse workspace | `syn-qr-de-native-ui-740561` | Serverless SQL transformation and serving |
+| Synapse procedure | `dbo.usp_process_machine_api_incremental` | Produces date-partitioned Bronze, Silver, and Gold Parquet outputs |
 | Power BI linked service | `ls_powerbi_qr_native_demo` | Synapse-to-Power BI workspace link |
 | Power BI workspace | `syn-qr-de-native-ui-740561` | BI artifacts |
 
@@ -74,21 +77,15 @@ datalake/
             └── *.parquet
 ```
 
-Raw ingestion completed for three `machine_api_response.json` files copied from `qrdbx06162114` into timestamped folders under:
+Raw ingestion copies `machine_api_response.json` files from the shared source lake into timestamped folders under:
 
 ```text
 datalake/raw/machine_api/<timestamp>/
 ```
 
-One inspected Raw folder was:
-
-```text
-datalake/raw/machine_api/20260621T000000Z/
-```
-
-The three Raw files contain two unique daily batches. The two deliveries for
-`batch-20260619` are byte-identical test-ingestion duplicates. Bronze preserves
-all 8,640 rows, while Silver deduplicates them to 5,760 unique `event_id` rows.
+The current lake contains three unique event dates. Duplicate source deliveries
+are retained in Bronze for lineage, while Silver deduplicates them by
+`event_id`. The reporting layers currently contain 8,640 unique events.
 
 ## 5. Medallion responsibilities
 
@@ -132,13 +129,14 @@ Not used:
 | Script / object | Purpose | Status |
 |---|---|---|
 | `sql_00_inspect_raw_json` | Inspect Raw JSON with Serverless SQL | Complete |
-| `OPENJSON` parsing query | Expand `print_events`; parsing test returned 100 rows | Complete |
+| `OPENJSON` parsing query | Expand the nested `print_events` array | Complete |
 | Bronze Parquet transformation | Write parsed events to Bronze | Complete |
 | Silver Parquet transformation | Clean and type event records | Complete |
 | Gold Parquet transformation | Aggregate daily KPI records | Complete |
 | `sql_06_create_gold_reporting_view` | Create the Power BI-facing Gold view | Complete |
-| `sql_07_incremental_partition_template` | Prepare one new date-partitioned Bronze, Silver, and Gold run | Complete; saved template, not executed |
-| `sql_08_create_scalable_gold_view` | Read current and future Gold Parquet partitions recursively | Complete and executed |
+| `sql_07_incremental_partition_template` | Document date-partitioned Bronze, Silver, and Gold CETAS patterns | Complete |
+| `sql_08_create_scalable_gold_view` | Read all Gold Parquet partitions recursively | Complete and executed |
+| `sql_09_create_incremental_medallion_procedure` | Process each scheduled source delivery into date-partitioned medallion outputs | Complete and deployed |
 | `vw_gold_print_event_kpis_daily` | Reporting view over Gold Parquet | Complete |
 
 ### Showcase SQL exports
@@ -157,9 +155,8 @@ The repository includes a documented, sequential Serverless SQL implementation:
 
 Scripts 03-08 match the SQL artifacts published in Synapse Studio. Scripts
 00-02 remain documented showcase versions for setup, inspection, and preview.
-Validate a new API version with `01_inspect_raw_json.sql` before processing it.
 
-### Incremental readiness
+### Incremental orchestration
 
 The published ADF pipeline now requires two string parameters:
 
@@ -169,8 +166,8 @@ window_end_utc
 ```
 
 They drive the Copy activity's **Filter by last modified** settings, preventing
-the normal incremental run from rescanning every source file. The incremental
-Synapse template writes each new event date to new immutable paths such as:
+the normal incremental run from rescanning every source file. The Synapse
+procedure writes each event date to immutable paths such as:
 
 ```text
 bronze/print_events/event_date=YYYY-MM-DD/run_<run_id>/
@@ -178,25 +175,24 @@ silver/print_events/event_date=YYYY-MM-DD/run_<run_id>/
 gold/print_event_kpis_daily/event_date=YYYY-MM-DD/run_<run_id>/
 ```
 
-The template must be updated with the actual event date, Raw ingestion-folder
-pattern, and unique run ID before execution. CETAS output locations cannot be
-reused. The stable Gold view recursively reads Parquet below
+The procedure derives the ingestion date, event date, and run key from the ADF
+schedule. CETAS output locations are unique per scheduled run. The stable Gold
+view recursively reads Parquet below
 `gold/print_event_kpis_daily/`, so the semantic model keeps the same source view.
 
-The published trigger configuration is:
+The active trigger configuration is:
 
 ```text
-Name:             tr_daily_machine_api_incremental
-Type:             Tumbling window
-Frequency:        Every 24 hours
-Start:            2026-08-02 00:00:00 UTC
-Max concurrency:  1
-Retry:            1 after 60 seconds
-Runtime state:    Stopped
+Name:          tr_daily_machine_api_schedule_1200_bkk
+Type:          Schedule
+Frequency:     Daily at 12:00
+Time zone:     SE Asia Standard Time
+Start:         2026-08-03 12:00 Asia/Bangkok
+Runtime state: Started
 ```
 
-The trigger maps `windowStartTime` and `windowEndTime` to the two pipeline
-parameters. Keep it stopped until recurring source delivery is ready.
+The trigger passes its scheduled time as `window_end_utc` and derives
+`window_start_utc` by subtracting 24 hours.
 
 ## 7. Gold reporting schema
 
@@ -324,26 +320,24 @@ Visual standards:
 - Exact data labels with no automatic `K` abbreviation
 - Categorical date axis
 
-## 9. Verified report output
+## 9. Report output
 
-Final Reading view and lineage were visually checked on 2026-07-31.
+The report and lineage are published in the Power BI workspace.
 
 ![Power BI Print Event Operations Overview](docs/images/power-bi-report.jpg)
 
-*Power BI Reading view showing KPI cards, daily quality comparison, and the
-daily operations detail table.*
+*Power BI Reading view showing the original two-day KPI baseline. The current
+semantic model also includes the 2026-08-01 daily partition documented below.*
 
 ### KPI cards
 
 | KPI | Verified value |
 |---|---:|
-| Total Events | 5,760 |
-| Successful Events | 5,225 |
-| Rejected Events | 535 |
-| Success Rate | 90.71% |
-| Reject Rate | 9.29% |
-| Average Daily QR Grade Score | 0.91 |
-| Average Daily Position Error | 0.194 mm |
+| Total Events | 8,640 |
+| Successful Events | 7,826 |
+| Rejected Events | 814 |
+| Success Rate | 90.58% |
+| Reject Rate | 9.42% |
 
 ### Daily detail
 
@@ -351,30 +345,26 @@ daily operations detail table.*
 |---|---|---|---:|---:|---:|---:|---:|
 | 2026-06-19 | M01 | Cola Can 330ml | 2,880 | 2,612 | 268 | 90.69% | 9.31% |
 | 2026-06-20 | M01 | Cola Can 330ml | 2,880 | 2,613 | 267 | 90.73% | 9.27% |
-| **Total** |  |  | **5,760** | **5,225** | **535** | **90.71%** | **9.29%** |
+| 2026-08-01 | M01 | Cola Can 330ml | 2,880 | 2,601 | 279 | 90.31% | 9.69% |
+| **Total** |  |  | **8,640** | **7,826** | **814** | **90.58%** | **9.42%** |
 
-## 10. Refresh and operating procedure
+## 10. Daily orchestration
 
-Current Power BI status:
+The automated sequence uses Bangkok time:
 
-- Semantic model refreshed: 2026-07-31 02:22 AM as displayed in Power BI.
-- Scheduled refresh: not configured.
-- Next refresh: `N/A`.
+```text
+11:45  Azure Function writes the shared source JSON
+12:00  ADF copies the latest source window and invokes Synapse Serverless SQL
+12:30  Power BI refreshes sm_gold_print_event_kpis_daily
+```
 
-Recommended test workflow:
+The ADF pipeline executes two ordered activities:
 
-1. Run `pl_ingest_machine_api_json` only when new source data is required, and
-   supply `window_start_utc` and `window_end_utc` in ISO-8601 UTC format.
-2. Confirm the new JSON file exists under the expected Raw timestamp folder.
-3. Copy `07_incremental_partition_template.sql`, replace its marked date,
-   Raw-folder pattern, and run suffix, then execute it once.
-4. Write new date- and run-partitioned Bronze, Silver, and Gold Parquet outputs.
-5. Validate the Gold reporting view.
-6. Refresh `sm_gold_print_event_kpis_daily` manually.
-7. Validate KPI totals and dates in `rpt_print_event_kpis_daily`.
-8. Save the report before leaving Editing view.
+1. `Copy_machine_api_json_to_raw`
+2. `Run_synapse_incremental_medallion`, after the copy succeeds
 
-Avoid refreshing Power BI when the Gold data has not changed.
+The Power BI semantic model uses Import storage mode and has a daily 12:30
+schedule in `SE Asia Standard Time`, with failure email enabled.
 
 ## 11. Cost controls
 
@@ -383,13 +373,9 @@ Avoid refreshing Power BI when the Gold data has not changed.
 - No Spark pool.
 - No Dedicated SQL pool.
 - Parquet used after Raw to reduce scanned data.
-- Manual pipeline execution during testing.
-- Daily tumbling-window trigger published but intentionally stopped.
-- Manual semantic-model refresh during testing.
+- Daily ADF schedule at 12:00 Asia/Bangkok.
+- Daily Power BI semantic-model refresh at 12:30 Asia/Bangkok.
 - No Power BI app creation for the MVP.
-- No scheduled refresh while the source remains static.
-
-Power BI displayed a trial with six days remaining on 2026-07-31. Recheck licensing and workspace capacity before relying on sharing or scheduled refresh after the trial.
 
 ## 12. Security and GitHub readiness
 
@@ -427,37 +413,12 @@ Azure-Native-Data-Engineering-UI/
 │       └── technical-flow.svg
 ```
 
-## 13. Current limitations
-
-- Demo dataset currently covers two dates.
-- Current report data contains one machine and one product.
-- Incremental ADF ingestion is parameterized, but Raw-to-Gold execution and
-  Power BI refresh are not yet orchestrated end to end.
-- No scheduled Power BI refresh.
-- Validate Raw JSON schema before processing another API version.
-- The ADF pipeline JSON has not been exported because the project was built and
-  validated through the Azure UI.
-- Infrastructure is not yet represented as Bicep, ARM, or Terraform.
-
-## 14. Recommended next steps
-
-1. Optionally export the ADF pipeline JSON for full reproducibility.
-2. Capture clean screenshots of:
-   - ADF pipeline
-   - ADLS Raw/Bronze/Silver/Gold folders
-   - Synapse Gold query result
-   - Power BI report Reading view
-   - Power BI lineage view
-3. Optionally add a `.gitignore` if local tooling begins creating artifacts.
-4. Add automated orchestration only if it provides portfolio value without
-   exceeding the cost guardrails.
-
-## 15. Completion checklist
+## 13. Completion checklist
 
 - [x] Resource group and budget
 - [x] ADLS Gen2 and medallion folders
 - [x] ADF ingestion pipeline
-- [x] Three Raw JSON ingestions
+- [x] Timestamped Raw JSON ingestion
 - [x] Raw JSON inspection
 - [x] `print_events` parsing with `OPENJSON`
 - [x] Bronze Parquet
@@ -474,13 +435,14 @@ Azure-Native-Data-Engineering-UI/
 - [x] Add DAX and TMDL semantic-model scripts
 - [x] Add Business and Technical SVG architecture diagrams
 - [x] Parameterize ADF ingestion by source last-modified UTC window
-- [x] Add a stopped daily tumbling-window trigger with parameter mapping
+- [x] Enable the daily ADF schedule with parameter mapping
 - [x] Add incremental date-partition template
+- [x] Deploy the incremental Synapse medallion procedure
 - [x] Create stable recursive Gold reporting view
-- [ ] Optionally export the ADF pipeline JSON
+- [x] Configure the daily Power BI semantic-model refresh
 - [x] Review for secrets, initialize Git, and publish the repository
 
-## 16. Technical references
+## 14. Technical references
 
 - [Query data storage with Synapse Serverless SQL](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/query-data-storage)
 - [CREATE EXTERNAL TABLE AS SELECT (CETAS) in Synapse SQL](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/develop-tables-cetas)
