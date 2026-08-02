@@ -156,27 +156,27 @@
 
   <!-- Outcomes -->
   <rect x="88" y="574" width="1424" height="238" rx="28" fill="#0b2034" stroke="#31546f" stroke-width="2" filter="url(#softShadow)"/>
-  <text x="120" y="620" class="lane">VERIFIED MVP OUTCOMES</text>
+  <text x="120" y="620" class="lane">OPERATIONAL OUTCOMES</text>
 
   <g>
     <rect x="120" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
-    <text x="230" y="699" text-anchor="middle" class="kpi-value">5,760</text>
-    <text x="230" y="730" text-anchor="middle" class="kpi-label">TOTAL PRINT EVENTS</text>
+    <text x="230" y="699" text-anchor="middle" class="kpi-value">TRUSTED</text>
+    <text x="230" y="730" text-anchor="middle" class="kpi-label">EVENT TOTALS</text>
   </g>
   <g>
     <rect x="358" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
-    <text x="468" y="699" text-anchor="middle" class="kpi-value">90.71%</text>
+    <text x="468" y="699" text-anchor="middle" class="kpi-value">MONITORED</text>
     <text x="468" y="730" text-anchor="middle" class="kpi-label">SUCCESS RATE</text>
   </g>
   <g>
     <rect x="596" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
-    <text x="706" y="699" text-anchor="middle" class="kpi-value">0.91</text>
-    <text x="706" y="730" text-anchor="middle" class="kpi-label">AVG QR GRADE SCORE</text>
+    <text x="706" y="699" text-anchor="middle" class="kpi-value">TRACKED</text>
+    <text x="706" y="730" text-anchor="middle" class="kpi-label">QR GRADE</text>
   </g>
   <g>
     <rect x="834" y="648" width="220" height="118" rx="18" fill="#112d46" stroke="#2d5570"/>
-    <text x="944" y="699" text-anchor="middle" class="kpi-value">0.194 mm</text>
-    <text x="944" y="730" text-anchor="middle" class="kpi-label">AVG POSITION ERROR</text>
+    <text x="944" y="699" text-anchor="middle" class="kpi-value">TRACKED</text>
+    <text x="944" y="730" text-anchor="middle" class="kpi-label">POSITION ERROR</text>
   </g>
   <g>
     <rect x="1072" y="648" width="408" height="118" rx="18" fill="#0f3d3a" stroke="#2dd4bf"/>
@@ -185,5 +185,5 @@
     <text x="1100" y="744" class="outcome-copy">traceable detail for faster investigation.</text>
   </g>
 
-  <text x="88" y="858" class="kpi-label">AZURE-NATIVE DATA ENGINEERING UI  •  BUSINESS FLOW  •  VERIFIED 31 JUL 2026</text>
+  <text x="88" y="858" class="kpi-label">AZURE-NATIVE DATA ENGINEERING UI  •  BUSINESS FLOW  •  DAILY AUTOMATED PIPELINE</text>
 </svg>

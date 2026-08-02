@@ -81,7 +81,7 @@
     <text x="523" y="239" class="node-title">Azure Data Factory</text>
     <text x="523" y="263" class="node-name">adf-qr-de-native-ui-740561</text>
     <text x="469" y="300" class="node-name">pl_ingest_machine_api_json</text>
-    <text x="469" y="322" class="small">UI-driven batch copy pipeline</text>
+    <text x="469" y="322" class="small">Daily scheduled batch copy pipeline</text>
   </g>
 
   <!-- Raw -->
@@ -92,7 +92,7 @@
     <text x="933" y="239" class="node-title">ADLS Gen2 · Raw</text>
     <text x="933" y="263" class="node-name">stqrdenativeui740561</text>
     <text x="879" y="300" class="node-name">datalake/raw/machine_api/</text>
-    <text x="879" y="322" class="small">Three immutable JSON ingestions</text>
+    <text x="879" y="322" class="small">Timestamped immutable JSON deliveries</text>
   </g>
 
   <!-- Parser -->
@@ -103,7 +103,7 @@
     <text x="1343" y="239" class="node-title">Parse</text>
     <text x="1343" y="263" class="node-name">OPENJSON</text>
     <text x="1289" y="300" class="node-copy">print_events array</text>
-    <text x="1289" y="322" class="small">100-row parse test</text>
+    <text x="1289" y="322" class="small">Nested event expansion</text>
   </g>
 
   <!-- Down connector -->
@@ -207,8 +207,8 @@
     <text x="1210" y="843" class="guard-copy">Parquet after Raw</text>
 
     <path d="M 1176 874 L 1183 881 L 1196 865" fill="none" stroke="#5eead4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="1210" y="880" class="guard-copy">Manual test refresh</text>
+    <text x="1210" y="880" class="guard-copy">Daily scheduled refresh</text>
   </g>
 
-  <text x="72" y="958" class="footer">RG: rg-qr-de-native-demo-UI  •  ADLS: stqrdenativeui740561  •  SERVERLESS-FIRST  •  VERIFIED 31 JUL 2026</text>
+  <text x="72" y="958" class="footer">RG: rg-qr-de-native-demo-UI  •  ADLS: stqrdenativeui740561  •  SERVERLESS-FIRST  •  DAILY AUTOMATED FLOW</text>
 </svg>
