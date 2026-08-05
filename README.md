@@ -374,10 +374,19 @@ The Azure-native workflow uses email-only, notification-only monitoring:
 | Scope | Alert rule | Condition | Notification |
 |---|---|---|---|
 | Shared source Function `func-qr-daily-740561` | `ar-qr-function-no-execution-24h` | Total `FunctionExecutionCount < 1` over 24 hours, evaluated every 5 minutes | `ag-qr-function-email-alerts` |
+| Shared source Application Insights `appi-qr-shared-source-observability` | `ar-qr-shared-source-dq-failed` | Count of `QR_SHARED_SOURCE_DQ_FAIL` log rows greater than 0 over 15 minutes, evaluated every 15 minutes | `ag-qr-function-email-alerts` |
 | ADF pipeline `pl_ingest_machine_api_json` | `ar-qr-adf-pipeline-failed` | Total failed pipeline runs greater than 0 over 5 minutes, evaluated every 5 minutes | `ag-qr-adf-email-alerts` |
 
-Both rules are enabled at severity 2. They send email notifications only and
-do not retry, rerun, or backfill the Function, ADF pipeline, or Synapse work.
+The shared Function validates each generated payload against one upstream
+contract before writing it to ADLS: the expected business date, a non-empty
+`print_events` array with a matching declared record count, required event
+fields, and valid unique `event_id` values. Validation failures are combined
+into one `QR_SHARED_SOURCE_DQ_FAIL` log entry. The payload is still written for
+lineage; monitoring is notification-only and does not block either downstream
+project.
+
+All three rules are enabled at severity 2. They send email notifications only
+and do not retry, rerun, or backfill the Function, ADF pipeline, or Synapse work.
 
 ## 11. Cost controls
 
