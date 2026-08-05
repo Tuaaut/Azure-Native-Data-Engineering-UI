@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1160" viewBox="0 0 1600 1160" role="img" aria-labelledby="title desc">
   <title id="title">Azure-native data engineering technical architecture</title>
-  <desc id="desc">Technical flow from machine API JSON through Azure Data Factory, ADLS Gen2 Raw, Synapse Serverless SQL, Bronze Silver and Gold Parquet, the Gold view, Power BI semantic model, and Power BI report, with email-only Function and ADF failure observability.</desc>
+  <desc id="desc">Technical flow from machine API JSON through Azure Data Factory, ADLS Gen2 Raw, Synapse Serverless SQL, Bronze Silver and Gold Parquet, the Gold view, Power BI semantic model, and Power BI report, with email-only Function, shared-source data-quality, and ADF failure observability.</desc>
 
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
@@ -19,13 +19,16 @@
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="10" stdDeviation="13" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
-    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 12 6 L 0 12 z" fill="#7dd3fc"/>
     </marker>
-    <marker id="arrowGold" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+    <marker id="arrowPurple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#a78bfa"/>
+    </marker>
+    <marker id="arrowGold" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 12 6 L 0 12 z" fill="#fbbf24"/>
     </marker>
-    <marker id="arrowAlert" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+    <marker id="arrowAlert" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 12 6 L 0 12 z" fill="#fb7185"/>
     </marker>
     <style>
@@ -42,7 +45,7 @@
     </style>
   </defs>
 
-  <rect width="1600" height="1000" fill="url(#background)"/>
+  <rect width="1600" height="1160" fill="url(#background)"/>
   <circle cx="1500" cy="-90" r="360" fill="#38bdf8" opacity="0.06"/>
   <circle cx="-40" cy="1040" r="330" fill="#fbbf24" opacity="0.035"/>
 
@@ -63,9 +66,8 @@
   <text x="96" y="961" class="band-title" fill="#fda4af">04  EMAIL-ONLY FAILURE OBSERVABILITY</text>
 
   <!-- Row 1 arrows -->
-  <path d="M 386 270 H 445" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
-  <path d="M 796 270 H 855" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
-  <path d="M 1206 270 H 1265" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 386 270 H 445 M 796 270 H 855 M 1206 270 H 1265" stroke="#7dd3fc" stroke-width="4" fill="none"/>
+  <path d="M 445 270 L 436 265 V 275 Z M 855 270 L 846 265 V 275 Z M 1265 270 L 1256 265 V 275 Z" fill="#7dd3fc"/>
 
   <!-- Source -->
   <g filter="url(#shadow)">
@@ -112,12 +114,12 @@
   </g>
 
   <!-- Down connector -->
-  <path d="M 1376 336 V 392 H 304 V 454" fill="none" stroke="#a78bfa" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 1376 336 V 392 H 304 V 454" fill="none" stroke="#a78bfa" stroke-width="4"/>
+  <path d="M 304 454 L 299 445 H 309 Z" fill="#a78bfa"/>
 
   <!-- Row 2 arrows -->
-  <path d="M 500 528 H 558" stroke="#a78bfa" stroke-width="4" marker-end="url(#arrow)"/>
-  <path d="M 806 528 H 864" stroke="#a78bfa" stroke-width="4" marker-end="url(#arrow)"/>
-  <path d="M 1112 528 H 1170" stroke="#a78bfa" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M 500 528 H 558 M 806 528 H 864 M 1112 528 H 1170" stroke="#a78bfa" stroke-width="4" fill="none"/>
+  <path d="M 558 528 L 549 523 V 533 Z M 864 528 L 855 523 V 533 Z M 1170 528 L 1161 523 V 533 Z" fill="#a78bfa"/>
 
   <!-- Serverless -->
   <g filter="url(#shadow)">
@@ -164,11 +166,12 @@
   </g>
 
   <!-- Down connector to serving -->
-  <path d="M 1329 612 V 646 H 250 V 752" fill="none" stroke="#fbbf24" stroke-width="4" marker-end="url(#arrowGold)"/>
+  <path d="M 1329 612 V 646 H 250 V 752" fill="none" stroke="#fbbf24" stroke-width="4"/>
+  <path d="M 250 752 L 245 743 H 255 Z" fill="#fbbf24"/>
 
   <!-- Serving arrows -->
-  <path d="M 423 811 H 468" stroke="#fbbf24" stroke-width="4" marker-end="url(#arrowGold)"/>
-  <path d="M 759 811 H 804" stroke="#fbbf24" stroke-width="4" marker-end="url(#arrowGold)"/>
+  <path d="M 423 811 H 468 M 759 811 H 804" stroke="#fbbf24" stroke-width="4" fill="none"/>
+  <path d="M 468 811 L 459 806 V 816 Z M 804 811 L 795 806 V 816 Z" fill="#fbbf24"/>
 
   <!-- Gold view -->
   <g filter="url(#shadow)">
@@ -217,37 +220,42 @@
 
   <!-- Failure observability -->
   <g filter="url(#shadow)">
-    <rect x="112" y="980" width="330" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <rect x="112" y="980" width="260" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
     <text x="136" y="1012" class="node-title">Shared Function health</text>
-    <text x="136" y="1037" class="node-name">FunctionExecutionCount &lt; 1 / 24h</text>
+    <text x="136" y="1037" class="node-name">Execution count &lt; 1 / 24h</text>
     <text x="136" y="1057" class="small">Evaluated every 5 minutes · Sev 2</text>
   </g>
 
   <g filter="url(#shadow)">
-    <rect x="476" y="980" width="330" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
-    <text x="500" y="1012" class="node-title">ADF pipeline failures</text>
-    <text x="500" y="1037" class="node-name">PipelineFailedRuns &gt; 0 / 5m</text>
-    <text x="500" y="1057" class="small">pl_ingest_machine_api_json · Sev 2</text>
+    <rect x="395" y="980" width="310" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="419" y="1012" class="node-title">Application Insights DQ</text>
+    <text x="419" y="1037" class="node-name">QR_SHARED_SOURCE_DQ_FAIL</text>
+    <text x="419" y="1057" class="small">4 contract checks · 15m · Sev 2</text>
   </g>
-
-  <path d="M 442 1023 H 464" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
-  <path d="M 806 1023 H 842" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
 
   <g filter="url(#shadow)">
-    <rect x="854" y="980" width="340" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
-    <text x="878" y="1012" class="node-title">Email Action Groups</text>
-    <text x="878" y="1037" class="node-name">Function + ADF recipients</text>
-    <text x="878" y="1057" class="small">Azure Monitor notification delivery</text>
+    <rect x="728" y="980" width="275" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="752" y="1012" class="node-title">ADF pipeline failures</text>
+    <text x="752" y="1037" class="node-name">PipelineFailedRuns &gt; 0 / 5m</text>
+    <text x="752" y="1057" class="small">pl_ingest_machine_api_json · Sev 2</text>
   </g>
-
-  <path d="M 1194 1023 H 1228" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
 
   <g filter="url(#shadow)">
-    <rect x="1240" y="980" width="248" height="86" rx="16" fill="#26342f" stroke="#5eead4" stroke-width="2"/>
-    <text x="1264" y="1012" class="guard-title">Notification only</text>
-    <text x="1264" y="1037" class="guard-copy">No retry · No rerun</text>
-    <text x="1264" y="1057" class="small">No automated backfill</text>
+    <rect x="1026" y="980" width="245" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="1050" y="1012" class="node-title">Email Action Groups</text>
+    <text x="1050" y="1037" class="node-name">Function · DQ · ADF</text>
+    <text x="1050" y="1057" class="small">Azure Monitor delivery</text>
   </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="980" width="194" height="86" rx="16" fill="#26342f" stroke="#5eead4" stroke-width="2"/>
+    <text x="1318" y="1012" class="guard-title">Notification only</text>
+    <text x="1318" y="1037" class="guard-copy">No retry · rerun</text>
+    <text x="1318" y="1057" class="small">No automated backfill</text>
+  </g>
+
+  <path d="M 372 1023 H 395 M 705 1023 H 728 M 1003 1023 H 1026 M 1271 1023 H 1294" stroke="#fb7185" stroke-width="3" fill="none"/>
+  <path d="M 395 1023 L 386 1018 V 1028 Z M 728 1023 L 719 1018 V 1028 Z M 1026 1023 L 1017 1018 V 1028 Z M 1294 1023 L 1285 1018 V 1028 Z" fill="#fb7185"/>
 
   <text x="72" y="1135" class="footer">RG: rg-qr-de-native-demo-UI  •  ADLS: stqrdenativeui740561  •  SERVERLESS-FIRST  •  DAILY AUTOMATED FLOW</text>
 </svg>
