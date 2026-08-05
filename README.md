@@ -114,6 +114,23 @@ business-event totals without double-counting repeated source deliveries.
 - Stores reporting-ready Parquet.
 - Feeds the Synapse reporting view and Power BI semantic model.
 
+### Print-event quality rule
+
+The shared source marks an event as rejected when any one of these conditions
+is true:
+
+```text
+print_status != "PRINTED"
+OR qr_read_success != 1
+OR ABS(position_error_mm) > 0.45
+```
+
+A successful event must therefore be printed, readable by the QR reader, and
+within the 0.45 mm position-error tolerance. `qr_grade_score` is reported as a
+quality indicator but is not part of the current reject decision. The source
+currently provides only the Boolean `is_reject` result, not a separate
+`reject_reason` field.
+
 ## 6. Synapse Serverless SQL
 
 Only the built-in **Serverless SQL** endpoint is used.
@@ -350,6 +367,18 @@ The ADF pipeline executes two ordered activities:
 The Power BI semantic model uses Import storage mode and has a daily 12:30
 schedule in `SE Asia Standard Time`, with failure email enabled.
 
+### Failure observability
+
+The Azure-native workflow uses email-only, notification-only monitoring:
+
+| Scope | Alert rule | Condition | Notification |
+|---|---|---|---|
+| Shared source Function `func-qr-daily-740561` | `ar-qr-function-no-execution-24h` | Total `FunctionExecutionCount < 1` over 24 hours, evaluated every 5 minutes | `ag-qr-function-email-alerts` |
+| ADF pipeline `pl_ingest_machine_api_json` | `ar-qr-adf-pipeline-failed` | Total failed pipeline runs greater than 0 over 5 minutes, evaluated every 5 minutes | `ag-qr-adf-email-alerts` |
+
+Both rules are enabled at severity 2. They send email notifications only and
+do not retry, rerun, or backfill the Function, ADF pipeline, or Synapse work.
+
 ## 11. Cost controls
 
 - Azure budget: USD 10/month.
@@ -424,6 +453,7 @@ Azure-Native-Data-Engineering-UI/
 - [x] Deploy the incremental Synapse medallion procedure
 - [x] Create stable recursive Gold reporting view
 - [x] Configure the daily Power BI semantic-model refresh
+- [x] Configure email-only Function and ADF failure observability
 - [x] Review for secrets, initialize Git, and publish the repository
 
 ## 14. Technical references
