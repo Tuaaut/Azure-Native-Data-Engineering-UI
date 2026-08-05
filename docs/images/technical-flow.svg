@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1160" viewBox="0 0 1600 1160" role="img" aria-labelledby="title desc">
   <title id="title">Azure-native data engineering technical architecture</title>
-  <desc id="desc">Technical flow from machine API JSON through Azure Data Factory, ADLS Gen2 Raw, Synapse Serverless SQL, Bronze Silver and Gold Parquet, the Gold view, Power BI semantic model, and Power BI report.</desc>
+  <desc id="desc">Technical flow from machine API JSON through Azure Data Factory, ADLS Gen2 Raw, Synapse Serverless SQL, Bronze Silver and Gold Parquet, the Gold view, Power BI semantic model, and Power BI report, with email-only Function and ADF failure observability.</desc>
 
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
@@ -24,6 +24,9 @@
     </marker>
     <marker id="arrowGold" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
       <path d="M 0 0 L 12 6 L 0 12 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrowAlert" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#fb7185"/>
     </marker>
     <style>
       .title { font-family: Arial, Helvetica, sans-serif; font-size: 45px; font-weight: 700; fill: #f8fafc; letter-spacing: -0.8px; }
@@ -51,11 +54,13 @@
   <rect x="72" y="397" width="1456" height="258" rx="24" fill="#0b2034" stroke="#244a65"/>
   <rect x="72" y="681" width="1040" height="228" rx="24" fill="#0c2338" stroke="#244a65"/>
   <rect x="1138" y="681" width="390" height="228" rx="24" fill="#08312f" stroke="#1f8a78"/>
+  <rect x="72" y="931" width="1456" height="164" rx="24" fill="#301929" stroke="#9f3c5c"/>
 
   <text x="96" y="181" class="band-title" fill="#7dd3fc">01  INGESTION &amp; LANDING</text>
   <text x="96" y="427" class="band-title" fill="#c4b5fd">02  SERVERLESS MEDALLION TRANSFORMATION</text>
   <text x="96" y="711" class="band-title" fill="#fbbf24">03  SERVING &amp; BUSINESS INTELLIGENCE</text>
   <text x="1162" y="711" class="band-title" fill="#5eead4">COST GUARDRAILS</text>
+  <text x="96" y="961" class="band-title" fill="#fda4af">04  EMAIL-ONLY FAILURE OBSERVABILITY</text>
 
   <!-- Row 1 arrows -->
   <path d="M 386 270 H 445" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)"/>
@@ -210,5 +215,39 @@
     <text x="1210" y="880" class="guard-copy">Daily scheduled refresh</text>
   </g>
 
-  <text x="72" y="958" class="footer">RG: rg-qr-de-native-demo-UI  •  ADLS: stqrdenativeui740561  •  SERVERLESS-FIRST  •  DAILY AUTOMATED FLOW</text>
+  <!-- Failure observability -->
+  <g filter="url(#shadow)">
+    <rect x="112" y="980" width="330" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="136" y="1012" class="node-title">Shared Function health</text>
+    <text x="136" y="1037" class="node-name">FunctionExecutionCount &lt; 1 / 24h</text>
+    <text x="136" y="1057" class="small">Evaluated every 5 minutes · Sev 2</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="476" y="980" width="330" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="500" y="1012" class="node-title">ADF pipeline failures</text>
+    <text x="500" y="1037" class="node-name">PipelineFailedRuns &gt; 0 / 5m</text>
+    <text x="500" y="1057" class="small">pl_ingest_machine_api_json · Sev 2</text>
+  </g>
+
+  <path d="M 442 1023 H 464" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
+  <path d="M 806 1023 H 842" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="854" y="980" width="340" height="86" rx="16" fill="#441f35" stroke="#be4769" stroke-width="2"/>
+    <text x="878" y="1012" class="node-title">Email Action Groups</text>
+    <text x="878" y="1037" class="node-name">Function + ADF recipients</text>
+    <text x="878" y="1057" class="small">Azure Monitor notification delivery</text>
+  </g>
+
+  <path d="M 1194 1023 H 1228" stroke="#fb7185" stroke-width="4" marker-end="url(#arrowAlert)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1240" y="980" width="248" height="86" rx="16" fill="#26342f" stroke="#5eead4" stroke-width="2"/>
+    <text x="1264" y="1012" class="guard-title">Notification only</text>
+    <text x="1264" y="1037" class="guard-copy">No retry · No rerun</text>
+    <text x="1264" y="1057" class="small">No automated backfill</text>
+  </g>
+
+  <text x="72" y="1135" class="footer">RG: rg-qr-de-native-demo-UI  •  ADLS: stqrdenativeui740561  •  SERVERLESS-FIRST  •  DAILY AUTOMATED FLOW</text>
 </svg>
