@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "annotations": [],
+    "linkedServiceName": {
+      "referenceName": "ls_adls_sink_native",
+      "type": "LinkedServiceReference"
+    },
+    "schema": {},
+    "type": "Json",
+    "typeProperties": {
+      "location": {
+        "fileSystem": "datalake",
+        "folderPath": "raw/machine_api",
+        "type": "AzureBlobFSLocation"
+      }
+    }
+  }
+}

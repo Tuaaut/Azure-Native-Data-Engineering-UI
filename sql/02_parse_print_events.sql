@@ -1,74 +1,41 @@
-/*
-Parse print_events into a tabular result.
-
-This showcase mapping accepts common alternative JSON keys so the script remains
-readable without embedding the source payload in Git. Validate the candidates
-against 01_inspect_raw_json.sql before running against a new API version.
-*/
-
-WITH parsed AS (
-    SELECT
-        src.filename() AS source_file,
-        TRY_CONVERT(int, event_json.[key]) AS event_array_index,
-        COALESCE(
-            JSON_VALUE(event_json.[value], '$.event_id'),
-            JSON_VALUE(event_json.[value], '$.id')
-        ) AS event_id,
-        TRY_CONVERT(
-            datetime2(3),
-            COALESCE(
-                JSON_VALUE(event_json.[value], '$.event_ts'),
-                JSON_VALUE(event_json.[value], '$.event_timestamp'),
-                JSON_VALUE(event_json.[value], '$.timestamp')
-            )
-        ) AS event_ts,
-        JSON_VALUE(event_json.[value], '$.machine_id') AS machine_id,
-        JSON_VALUE(event_json.[value], '$.product_id') AS product_id,
-        JSON_VALUE(event_json.[value], '$.product_name') AS product_name,
-        UPPER(COALESCE(
-            JSON_VALUE(event_json.[value], '$.event_status'),
-            JSON_VALUE(event_json.[value], '$.print_status'),
-            JSON_VALUE(event_json.[value], '$.status')
-        )) AS event_status,
-        UPPER(COALESCE(
-            JSON_VALUE(event_json.[value], '$.qr_read_status'),
-            JSON_VALUE(event_json.[value], '$.qr_status')
-        )) AS qr_read_status,
-        TRY_CONVERT(
-            decimal(10,4),
-            COALESCE(
-                JSON_VALUE(event_json.[value], '$.qr_grade_score'),
-                JSON_VALUE(event_json.[value], '$.qr_grade')
-            )
-        ) AS qr_grade_score,
-        TRY_CONVERT(
-            decimal(10,4),
-            COALESCE(
-                JSON_VALUE(event_json.[value], '$.position_error_mm'),
-                JSON_VALUE(event_json.[value], '$.print_position_error_mm')
-            )
-        ) AS position_error_mm,
-        event_json.[value] AS event_json
+WITH raw_json AS (
+    SELECT jsonContent
     FROM OPENROWSET(
-        BULK = 'raw/machine_api/*/machine_api_response.json',
-        DATA_SOURCE = 'DataLake',
-        SINGLE_CLOB
-    ) AS src
-    CROSS APPLY OPENJSON(src.BulkColumn, '$.print_events') AS event_json
+        BULK 'https://stqrdenativeui740561.dfs.core.windows.net/datalake/raw/machine_api/*/machine_api_response.json',
+        FORMAT = 'CSV',
+        FIELDQUOTE = '0x0b',
+        FIELDTERMINATOR = '0x0b',
+        ROWTERMINATOR = '0x0b'
+    )
+    WITH (jsonContent varchar(MAX)) AS src
 )
 SELECT TOP (100)
-    source_file,
-    event_array_index,
-    event_id,
-    event_ts,
-    machine_id,
-    product_id,
-    product_name,
-    event_status,
-    qr_read_status,
-    qr_grade_score,
-    position_error_mm,
-    event_json
-FROM parsed
-ORDER BY source_file, event_array_index;
-
+    JSON_VALUE(r.jsonContent, '$.batch_id') AS batch_id,
+    JSON_VALUE(r.jsonContent, '$.line_id') AS line_id,
+    e.event_id,
+    TRY_CONVERT(datetime2(0), LEFT(e.event_ts, 19)) AS event_ts,
+    e.machine_id,
+    e.product_id,
+    e.product_name,
+    e.qr_code,
+    e.print_status,
+    e.qr_read_success,
+    e.is_reject,
+    e.qr_grade_score,
+    e.position_error_mm
+FROM raw_json AS r
+CROSS APPLY OPENJSON(r.jsonContent, '$.print_events')
+WITH (
+    event_id varchar(50) '$.event_id',
+    event_ts varchar(30) '$.event_ts',
+    machine_id varchar(20) '$.machine_id',
+    product_id varchar(50) '$.product_id',
+    product_name varchar(100) '$.product_name',
+    qr_code varchar(100) '$.qr_code',
+    print_status varchar(20) '$.print_status',
+    qr_read_success bit '$.qr_read_success',
+    is_reject bit '$.is_reject',
+    qr_grade_score decimal(5,3) '$.qr_grade_score',
+    position_error_mm decimal(8,3) '$.position_error_mm'
+) AS e
+ORDER BY event_ts;

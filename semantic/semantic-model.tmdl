@@ -29,11 +29,11 @@ table vw_gold_print_event_kpis_daily
         displayFolder: "DAX Measures"
 
     measure 'Average Daily QR Grade Score' =
-            AVERAGE ( vw_gold_print_event_kpis_daily[avg_qr_grade_score] )
+            DIVIDE(SUMX('vw_gold_print_event_kpis_daily', 'vw_gold_print_event_kpis_daily'[avg_qr_grade_score] * 'vw_gold_print_event_kpis_daily'[total_events]), SUM('vw_gold_print_event_kpis_daily'[total_events]), 0)
         formatString: 0.00
         displayFolder: "DAX Measures"
 
     measure 'Average Daily Position Error (mm)' =
-            AVERAGE ( vw_gold_print_event_kpis_daily[avg_abs_position_error_mm] )
+            DIVIDE(SUMX('vw_gold_print_event_kpis_daily', 'vw_gold_print_event_kpis_daily'[avg_abs_position_error_mm] * 'vw_gold_print_event_kpis_daily'[total_events]), SUM('vw_gold_print_event_kpis_daily'[total_events]), 0)
         formatString: 0.000
         displayFolder: "DAX Measures"

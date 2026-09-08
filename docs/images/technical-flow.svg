@@ -88,7 +88,7 @@
     <text x="523" y="239" class="node-title">Azure Data Factory</text>
     <text x="523" y="263" class="node-name">adf-qr-de-native-ui-740561</text>
     <text x="469" y="300" class="node-name">pl_ingest_machine_api_json</text>
-    <text x="469" y="322" class="small">Daily scheduled batch copy pipeline</text>
+    <text x="469" y="322" class="small">Mon/Thu scheduled batch copy pipeline</text>
   </g>
 
   <!-- Raw -->

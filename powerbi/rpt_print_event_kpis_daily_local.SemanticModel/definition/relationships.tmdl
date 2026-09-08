@@ -1,0 +1,20 @@
+relationship 1c0f67dd-ee0e-4471-ad8d-0be5a1d420ea
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_gold_print_event_kpis_daily.event_date
+	toColumn: LocalDateTable_f2fdb88d-f61c-46da-aa15-ffb06f019f1e.Date
+
+relationship 285b8509-250d-4a34-8e37-fe0f661742ad
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_gold_print_event_kpis_daily.first_event_ts
+	toColumn: LocalDateTable_e98c957b-4992-4ba5-a318-5e9eac1a1fb6.Date
+
+relationship 6e387b09-66bd-4640-9942-4960a20b82d5
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_gold_print_event_kpis_daily.last_event_ts
+	toColumn: LocalDateTable_9a0c1998-1dbf-4391-879a-e61c931d478a.Date
+
+relationship 4515f7de-0dce-439e-809d-a1615fff4231
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_gold_print_event_kpis_daily.gold_loaded_utc
+	toColumn: LocalDateTable_6cb852aa-04d5-41d6-b839-3982316758f8.Date
+

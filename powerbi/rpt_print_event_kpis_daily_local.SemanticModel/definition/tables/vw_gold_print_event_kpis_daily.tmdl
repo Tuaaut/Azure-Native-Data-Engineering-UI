@@ -1,0 +1,231 @@
+table vw_gold_print_event_kpis_daily
+	lineageTag: 20387ec0-5912-4362-af87-a1aee8cf5be4
+
+	measure 'Total Events' = SUM('vw_gold_print_event_kpis_daily'[total_events])
+		formatString: #,0
+		displayFolder: DAX Measures
+		lineageTag: 66fcf513-1708-42c3-8a9e-76e3aa6a9652
+
+	measure 'Successful Events' = SUM('vw_gold_print_event_kpis_daily'[successful_events])
+		formatString: #,0
+		displayFolder: DAX Measures
+		lineageTag: c4008fd3-a467-4df4-9b92-bdd45bd4c612
+
+	measure 'Rejected Events' = SUM('vw_gold_print_event_kpis_daily'[rejected_events])
+		formatString: #,0
+		displayFolder: DAX Measures
+		lineageTag: c964e7ba-4972-41a1-8912-07f5ba7b18fd
+
+	measure 'Success Rate %' = DIVIDE([Successful Events], [Total Events], 0)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: DAX Measures
+		lineageTag: 8336731a-462f-44d7-87aa-93235937e6dc
+
+	measure 'Reject Rate %' = DIVIDE([Rejected Events], [Total Events], 0)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: DAX Measures
+		lineageTag: 914a6393-d8ae-4cc4-956a-b9a7bad91e2b
+
+	measure 'Average Daily QR Grade Score' =
+			
+			DIVIDE(SUMX('vw_gold_print_event_kpis_daily', 'vw_gold_print_event_kpis_daily'[avg_qr_grade_score] * 'vw_gold_print_event_kpis_daily'[total_events]), SUM('vw_gold_print_event_kpis_daily'[total_events]), 0)
+		formatString: #,0.00
+		displayFolder: DAX Measures
+		lineageTag: ab3662bc-8c5a-4eda-9894-2b9a151bb7f9
+
+	measure 'Average Daily Position Error (mm)' =
+			
+			DIVIDE(SUMX('vw_gold_print_event_kpis_daily', 'vw_gold_print_event_kpis_daily'[avg_abs_position_error_mm] * 'vw_gold_print_event_kpis_daily'[total_events]), SUM('vw_gold_print_event_kpis_daily'[total_events]), 0)
+		formatString: #,0.000
+		displayFolder: DAX Measures
+		lineageTag: 33a052ec-0554-4bd9-b279-9464a571b21e
+
+	column event_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: f6ac53b7-8202-4a6f-9dfe-667f4f0f7815
+		summarizeBy: none
+		sourceColumn: event_date
+
+		variation Variation
+			isDefault
+			relationship: 1c0f67dd-ee0e-4471-ad8d-0be5a1d420ea
+			defaultHierarchy: LocalDateTable_f2fdb88d-f61c-46da-aa15-ffb06f019f1e.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column machine_id
+		dataType: string
+		lineageTag: 3f9fe7a7-5d75-4fcf-a775-7e612649b21f
+		summarizeBy: none
+		sourceColumn: machine_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: string
+		lineageTag: 77655b6e-80b6-4641-bad2-2889e9834e01
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: 65415320-3950-40b7-ae98-1d1aafc4530a
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_events
+		dataType: int64
+		formatString: 0
+		lineageTag: dc0cacc3-3aac-4310-a041-6043bc8ef02a
+		summarizeBy: sum
+		sourceColumn: total_events
+
+		annotation SummarizationSetBy = Automatic
+
+	column printed_events
+		dataType: int64
+		formatString: 0
+		lineageTag: b25737e6-511e-4109-a956-92f841366fb0
+		summarizeBy: sum
+		sourceColumn: printed_events
+
+		annotation SummarizationSetBy = Automatic
+
+	column failed_events
+		dataType: int64
+		formatString: 0
+		lineageTag: 63a35129-4a5f-496a-b25d-fb833a1ffa48
+		summarizeBy: sum
+		sourceColumn: failed_events
+
+		annotation SummarizationSetBy = Automatic
+
+	column rejected_events
+		dataType: int64
+		formatString: 0
+		lineageTag: 70d22ffb-f448-467b-bec3-de74f47b5610
+		summarizeBy: sum
+		sourceColumn: rejected_events
+
+		annotation SummarizationSetBy = Automatic
+
+	column qr_read_failures
+		dataType: int64
+		formatString: 0
+		lineageTag: d00cdd2a-1c4b-45fc-b622-40952efcfe89
+		summarizeBy: sum
+		sourceColumn: qr_read_failures
+
+		annotation SummarizationSetBy = Automatic
+
+	column successful_events
+		dataType: int64
+		formatString: 0
+		lineageTag: c7fea661-595d-469b-bda2-0f1ba23497e8
+		summarizeBy: sum
+		sourceColumn: successful_events
+
+		annotation SummarizationSetBy = Automatic
+
+	column success_rate_pct
+		dataType: double
+		lineageTag: 6f114107-bcfb-44d3-9b56-b9de2c11a1f2
+		summarizeBy: sum
+		sourceColumn: success_rate_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column reject_rate_pct
+		dataType: double
+		lineageTag: 71c15c21-d781-47f2-aa10-2e1df6c76ec1
+		summarizeBy: sum
+		sourceColumn: reject_rate_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_qr_grade_score
+		dataType: double
+		lineageTag: d5677937-049b-4e05-8294-a05a5ff91b6a
+		summarizeBy: sum
+		sourceColumn: avg_qr_grade_score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_abs_position_error_mm
+		dataType: double
+		lineageTag: ea32d583-9c44-40cd-a442-3b471a76aaa2
+		summarizeBy: sum
+		sourceColumn: avg_abs_position_error_mm
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column first_event_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: a07147e7-451e-4d00-b1a8-1b840a82bf1e
+		summarizeBy: none
+		sourceColumn: first_event_ts
+
+		variation Variation
+			isDefault
+			relationship: 285b8509-250d-4a34-8e37-fe0f661742ad
+			defaultHierarchy: LocalDateTable_e98c957b-4992-4ba5-a318-5e9eac1a1fb6.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_event_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 0ace6254-6198-4648-a032-fa0913f22aaa
+		summarizeBy: none
+		sourceColumn: last_event_ts
+
+		variation Variation
+			isDefault
+			relationship: 6e387b09-66bd-4640-9942-4960a20b82d5
+			defaultHierarchy: LocalDateTable_9a0c1998-1dbf-4391-879a-e61c931d478a.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column gold_loaded_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: d56c47d9-1e0d-4b92-a7a8-f3cd220ed412
+		summarizeBy: none
+		sourceColumn: gold_loaded_utc
+
+		variation Variation
+			isDefault
+			relationship: 4515f7de-0dce-439e-809d-a1615fff4231
+			defaultHierarchy: LocalDateTable_6cb852aa-04d5-41d6-b839-3982316758f8.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_gold_print_event_kpis_daily = m
+		mode: import
+		source =
+				let
+				  Source = Synapse.Contents(null),
+				  #"Navigation 1" = Source{[Name = "syn-qr-de-native-ui-740561"]}[Data],
+				  #"Navigation 2" = #"Navigation 1"{[Name = "qr_native_lakehouse"]}[Data],
+				  #"Navigation 3" = #"Navigation 2"{[Schema = "dbo", Item = "vw_gold_print_event_kpis_daily"]}[Data]
+				in
+				  #"Navigation 3"
+
+	annotation PBI_ResultType = Table
+

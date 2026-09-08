@@ -1,0 +1,21 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["vw_gold_print_event_kpis_daily"]
+
+annotation PBI_ProTooling = ["WebModelingEdit"]
+
+ref table vw_gold_print_event_kpis_daily
+ref table DateTableTemplate_c024147e-6486-435c-9d1d-e513f01f4111
+ref table LocalDateTable_f2fdb88d-f61c-46da-aa15-ffb06f019f1e
+ref table LocalDateTable_e98c957b-4992-4ba5-a318-5e9eac1a1fb6
+ref table LocalDateTable_9a0c1998-1dbf-4391-879a-e61c931d478a
+ref table LocalDateTable_6cb852aa-04d5-41d6-b839-3982316758f8
+

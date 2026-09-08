@@ -1,473 +1,142 @@
 # Azure-Native Data Engineering UI
 
-> Source of truth for the Azure-native batch data engineering and Power BI demonstration project.
+Azure-native QR printing analytics: **Function → ADLS Gen2 → ADF → Synapse Serverless SQL → Power BI**.
 
-**Status:** MVP complete  
-**Implementation style:** Azure portal and service UIs  
-**Cost strategy:** Serverless daily orchestration; no Spark or Dedicated SQL pool
+**Current runtime:** Azure cloud. Windows is used for administration, SQL, source files and Power BI Desktop. No local Docker, Python service or Task Scheduler is required.
 
-## 1. Project objective
+## 1. Business objective
 
-Build a cost-conscious Azure-native data engineering workflow that:
+Turn machine print events into daily machine/product KPIs: production volume, successful and rejected events, QR readability and print-position quality. The Power BI report is a one-page Print Event Operations Overview.
 
-1. Ingests machine API JSON files.
-2. Preserves the source payload in an ADLS Gen2 Raw layer.
-3. Parses the `print_events` JSON array with Synapse Serverless SQL.
-4. Produces Bronze, Silver, and Gold data as Parquet.
-5. Exposes a Gold reporting view.
-6. Serves reusable DAX measures through a Power BI semantic model.
-7. Presents a one-page operations report for print-event KPIs.
-8. Runs ingestion, transformation, and semantic-model refresh on coordinated Bangkok-time schedules.
+![Business flow](docs/images/business-flow.svg)
+![Technical flow](docs/images/technical-flow.svg)
 
-## 2. Architecture
+Diagrams show the service topology. The operating schedule and publication rules below supersede older timing or storage examples in screenshots.
 
-### Business flow
+## 2. Current schedule and cloud resources
 
-![Business flow from print events to operational action](docs/images/business-flow.svg)
+All times are Bangkok time.
 
-### Technical architecture
+| # | Component | Resource / operation | Schedule |
+|---:|---|---|---|
+| 1 | Generator | `func-qr-de-native-gen-740561` writes the previous business day's JSON | Monday/Thursday 12:00 |
+| 2 | Data lake | `stqrdenativeui740561`, container `datalake` | Persistent storage |
+| 3 | ADF | `adf-qr-de-native-ui-740561`, pipeline `pl_ingest_machine_api_json` | Monday/Thursday 12:30 |
+| 4 | Synapse | `syn-qr-de-native-ui-740561`, database `qr_native_lakehouse` | After successful Copy |
+| 5 | Power BI | Workspace `syn-qr-de-native-ui-740561`, model `sm_gold_print_event_kpis_daily` | Monday/Thursday 13:00 |
 
-![Azure-native technical architecture](docs/images/technical-flow.svg)
+ADF's legacy trigger name is still `tr_daily_machine_api_schedule_1200_bkk`; its actual recurrence is weekly Monday/Thursday at 12:30. The trigger passes a four-day last-modified window, allowing overlapping source deliveries. The Copy activity preserves actual source-folder names.
 
-Verified Power BI lineage:
+ADF concurrency is one. Copy has a 10-minute timeout; transformation has a 15-minute timeout. The BI schedule is intentionally later, but it is still time-based, not an ADF success dependency: a delayed/failed pipeline can leave Power BI showing the last valid snapshot.
 
-```text
-Synapse -> sm_gold_print_event_kpis_daily -> rpt_print_event_kpis_daily
-```
-
-## 3. Azure resources
-
-| Component | Resource / object | Purpose |
-|---|---|---|
-| Resource group | `rg-qr-de-native-demo-UI` | Project boundary |
-| Azure budget | USD 10/month | Cost guardrail |
-| ADLS Gen2 | `stqrdenativeui740561` | Data lake storage |
-| Container | `datalake` | Raw and medallion data |
-| Shared source function | `func-qr-daily-740561` | Writes one timestamped machine API JSON delivery to the shared source lake each day |
-| Azure Data Factory | `adf-qr-de-native-ui-740561` | Batch ingestion |
-| ADF pipeline | `pl_ingest_machine_api_json` | Incrementally copies machine API JSON to Raw using a last-modified UTC window |
-| ADF trigger | `tr_daily_machine_api_schedule_1200_bkk` | Active daily schedule at 12:00 Asia/Bangkok |
-| Synapse workspace | `syn-qr-de-native-ui-740561` | Serverless SQL transformation and serving |
-| Synapse procedure | `dbo.usp_process_machine_api_incremental` | Produces date-partitioned Bronze, Silver, and Gold Parquet outputs |
-| Power BI linked service | `ls_powerbi_qr_native_demo` | Synapse-to-Power BI workspace link |
-| Power BI workspace | `syn-qr-de-native-ui-740561` | BI artifacts |
-
-The Azure subscription ID is intentionally excluded so this document can be made public later.
-
-## 4. Data lake layout
+## 3. Data and publication contract
 
 ```text
 datalake/
-├── raw/
-│   └── machine_api/
-│       └── <ingestion_timestamp>/
-│           └── machine_api_response.json
-├── bronze/
-│   └── print_events/
-│       └── run_20260731_01/
-│           └── *.parquet
-├── silver/
-│   └── print_events/
-│       └── run_20260731_01/
-│           └── *.parquet
-└── gold/
-    └── print_event_kpis_daily/
-        └── run_20260731_01/
-            └── *.parquet
+  landing/machine_api/<source-folder>/machine_api_response.json
+  raw/machine_api/<source-folder>/machine_api_response.json
+  bronze/, silver/, gold/                 # historical published data, retained
+  medallion_v2/
+    bronze/event_date=YYYY-MM-DD/run_<attempt>/
+    silver/event_date=YYYY-MM-DD/run_<attempt>/
+    gold/event_date=YYYY-MM-DD/run_<attempt>/
+    commits/<attempt>/                    # validated publication manifests
 ```
 
-Raw ingestion copies `machine_api_response.json` files from the shared source lake into timestamped folders under:
+The procedure reads `event_ts` inside the JSON rather than assuming the folder name equals the ADF run date. Normal runs expect the previous Bangkok business date. An explicit `@event_date` supports recovery of older deliveries; late historical corrections require such a targeted run.
 
-```text
-datalake/raw/machine_api/<timestamp>/
+1. Confirm Raw has events for the expected date. Missing/stale source raises SQL error 50003.
+2. Write an immutable Bronze candidate preserving source lineage and repeated deliveries.
+3. Validate required fields, ranges and the reject rule; reject invalid candidates.
+4. Deduplicate by `event_id` into Silver, using latest source folder/load.
+5. Aggregate one complete business-date snapshot into Gold and reconcile its event count with Silver.
+6. Write a commit manifest only after validation. The stable Gold view exposes the latest committed snapshot for each date, retaining legacy data for dates not yet replaced.
+
+Repeating a date replaces its visible snapshot rather than adding its totals. Empty/failed candidates and old files remain invisible to the v2 reporting view. Unique attempt names bypass the empty external tables left by the old procedure without deleting historical data.
+
+The current implementation scans available Raw JSON to find the requested event date (about 48 MB during the September review). It incrementally replaces one date, but does not claim partition-pruned Raw reads. For larger histories, introduce an indexed delivery manifest/event-date Raw layout before scaling. ADF serialization is required; avoid direct concurrent procedure runs.
+
+### Quality rule
+
+An event is rejected if `print_status != 'PRINTED'`, `qr_read_success != 1`, or `ABS(position_error_mm) > 0.45`. The source Boolean `is_reject` must agree. QR grade is a quality indicator, not another rejection threshold. Current validation requires non-null QR grade/position values.
+
+## 4. SQL and reproducibility
+
+| # | Files | Purpose |
+|---:|---|---|
+| 1 | [00 setup](sql/00_setup_serverless_objects.sql) | Database, `ds_datalake`, `ff_parquet`, aligned with published Synapse objects |
+| 2 | [01 inspect](sql/01_inspect_raw_json.sql), [02 parse](sql/02_parse_print_events.sql) | Serverless CSV/OPENJSON syntax against actual Raw paths |
+| 3 | [03 Bronze](sql/03_create_bronze_parquet.sql), [04 Silver](sql/04_create_silver_parquet.sql), [05 Gold](sql/05_create_gold_parquet.sql) | Historical one-off showcase mappings, with fixed output locations |
+| 4 | [06 historical view](sql/06_create_gold_reporting_view.sql), [07 partition template](sql/07_incremental_partition_template.sql), [08 historical recursive view](sql/08_create_scalable_gold_view.sql) | Learning/history; do not deploy over the current reporting view |
+| 5 | [09 current procedure](sql/09_create_incremental_medallion_procedure.sql) | Validated replacement of one business date |
+| 6 | [10 current view](sql/10_create_committed_gold_view.sql) | Latest committed date snapshots plus unreplaced historical dates |
+| 7 | [11 validation](sql/11_validate_current_gold.sql) | Freshness, counts, duplicate grains and KPI reconciliation |
+
+The procedure generator [build_sql.py](scripts/build_sql.py) uses the historical 03–05 column mappings; changing those mappings requires regenerating and reviewing 09–10. Do not rerun fixed-location CETAS showcase scripts against occupied locations.
+
+Current ADF exports: [pipeline](infra/adf-pipeline.json), [trigger](infra/adf-trigger.json), [source dataset](infra/ds_source_machine_api_json.json), [sink dataset](infra/ds_sink_raw_machine_api_json.json). [Generator bindings](infra/generator-bindings.json) document the timer; they are not a backup of the Python function source. Linked-service credentials, RBAC and function implementation are not recreated by these files.
+
+## 5. Windows operations
+
+Sign in with Azure CLI using an account authorized for this project. The PowerShell helper obtains a short-lived Entra SQL token in memory; it never writes the token to disk.
+
+```powershell
+az login
+.\scripts\Invoke-ProjectSql.ps1 -File .\sql\11_validate_current_gold.sql
 ```
 
-Duplicate source deliveries are retained in Bronze for lineage, while Silver
-deduplicates them by `event_id`. Gold and Power BI therefore expose evolving
-business-event totals without double-counting repeated source deliveries.
+The helper uses the existing Windows .NET SQL client. `sqlcmd` and the Azure CLI `datafactory` extension are optional; the reviewed administration used `az rest`.
 
-## 5. Medallion responsibilities
+For controlled recovery, pass an ISO-8601 UTC scheduled time and the actual business date. This writes new snapshots and incurs normal serverless query/storage charges:
 
-### Raw
-
-- Immutable source JSON.
-- Preserves the original machine API response.
-- Stored by ingestion timestamp for traceability.
-
-### Bronze
-
-- Expands the `print_events` array into tabular event rows.
-- Retains source-level event attributes with minimal transformation.
-- Preserves duplicate source deliveries and ingestion lineage.
-- Stored as Parquet to reduce repeated JSON scanning.
-
-### Silver
-
-- Applies data types and standardized field names.
-- Deduplicates events by `event_id` using the latest source folder/load.
-- Produces analytics-ready print-event records.
-- Supports clean downstream aggregation.
-
-### Gold
-
-- Aggregates print-event KPIs by day, machine, and product.
-- Stores reporting-ready Parquet.
-- Feeds the Synapse reporting view and Power BI semantic model.
-
-### Print-event quality rule
-
-The shared source marks an event as rejected when any one of these conditions
-is true:
-
-```text
-print_status != "PRINTED"
-OR qr_read_success != 1
-OR ABS(position_error_mm) > 0.45
+```powershell
+.\scripts\Invoke-ProjectSql.ps1 -Query "EXEC dbo.usp_process_machine_api_incremental @window_end_utc='2026-09-03T05:30:00Z', @event_date='2026-09-02';"
 ```
 
-A successful event must therefore be printed, readable by the QR reader, and
-within the 0.45 mm position-error tolerance. `qr_grade_score` is reported as a
-quality indicator but is not part of the current reject decision. The source
-currently provides only the Boolean `is_reject` result, not a separate
-`reject_reason` field.
-
-## 6. Synapse Serverless SQL
-
-Only the built-in **Serverless SQL** endpoint is used.
-
-Not used:
-
-- Apache Spark pools
-- Dedicated SQL pools
-
-### Verified SQL artifacts
-
-| Script / object | Purpose | Status |
-|---|---|---|
-| `sql_00_inspect_raw_json` | Inspect Raw JSON with Serverless SQL | Complete |
-| `OPENJSON` parsing query | Expand the nested `print_events` array | Complete |
-| Bronze Parquet transformation | Write parsed events to Bronze | Complete |
-| Silver Parquet transformation | Clean and type event records | Complete |
-| Gold Parquet transformation | Aggregate daily KPI records | Complete |
-| `sql_06_create_gold_reporting_view` | Create the Power BI-facing Gold view | Complete |
-| `sql_07_incremental_partition_template` | Document date-partitioned Bronze, Silver, and Gold CETAS patterns | Complete |
-| `sql_08_create_scalable_gold_view` | Read all Gold Parquet partitions recursively | Complete and executed |
-| `sql_09_create_incremental_medallion_procedure` | Process each scheduled source delivery into date-partitioned medallion outputs | Complete and deployed |
-| `vw_gold_print_event_kpis_daily` | Reporting view over Gold Parquet | Complete |
-
-### Showcase SQL exports
-
-The repository includes a documented, sequential Serverless SQL implementation:
-
-1. [`00_setup_serverless_objects.sql`](sql/00_setup_serverless_objects.sql)
-2. [`01_inspect_raw_json.sql`](sql/01_inspect_raw_json.sql)
-3. [`02_parse_print_events.sql`](sql/02_parse_print_events.sql)
-4. [`03_create_bronze_parquet.sql`](sql/03_create_bronze_parquet.sql)
-5. [`04_create_silver_parquet.sql`](sql/04_create_silver_parquet.sql)
-6. [`05_create_gold_parquet.sql`](sql/05_create_gold_parquet.sql)
-7. [`06_create_gold_reporting_view.sql`](sql/06_create_gold_reporting_view.sql)
-8. [`07_incremental_partition_template.sql`](sql/07_incremental_partition_template.sql)
-9. [`08_create_scalable_gold_view.sql`](sql/08_create_scalable_gold_view.sql)
-
-Scripts 03-08 match the SQL artifacts published in Synapse Studio. Scripts
-00-02 remain documented showcase versions for setup, inspection, and preview.
-
-### Incremental orchestration
+Prefer the existing ADF pipeline for ordinary runs so its concurrency and alerting apply. After recovery, run SQL validation, refresh the Power BI semantic model, and verify report totals. Do not generate synthetic missing calendar days: this source intentionally delivers only twice a week.
 
-The published ADF pipeline now requires two string parameters:
+Deployment order for this existing environment: preserve definitions → deploy 09 → validate/publish recovered dates → deploy 10 → run 11. A new environment also requires real source data, cloud identities/linked services and historical baseline or an adapted bootstrap view; this is not a one-command infrastructure deployment.
 
-```text
-window_start_utc
-window_end_utc
-```
+## 6. Power BI and Desktop
 
-They drive the Copy activity's **Filter by last modified** settings, preventing
-the normal incremental run from rescanning every source file. The Synapse
-procedure writes each event date to immutable paths such as:
+Report: `rpt_print_event_kpis_daily`; model: `sm_gold_print_event_kpis_daily`; source: `dbo.vw_gold_print_event_kpis_daily`; storage mode: Import.
 
-```text
-bronze/print_events/event_date=YYYY-MM-DD/run_<run_id>/
-silver/print_events/event_date=YYYY-MM-DD/run_<run_id>/
-gold/print_event_kpis_daily/event_date=YYYY-MM-DD/run_<run_id>/
-```
+![Power BI report layout](docs/images/power-bi-report.jpg)
 
-The procedure derives the ingestion date, event date, and run key from the ADF
-schedule. CETAS output locations are unique per scheduled run. The stable Gold
-view recursively reads Parquet below
-`gold/print_event_kpis_daily/`, so the semantic model keeps the same source view.
+The screenshot is historical. Current totals follow validated Gold publications.
 
-The active trigger configuration is:
+For Desktop editing, open [rpt_print_event_kpis_daily_local.pbip](powerbi/rpt_print_event_kpis_daily_local.pbip), which includes both the Report and SemanticModel definitions. Keep the adjacent `.Report` and `.SemanticModel` folders together. This export contains definitions, not cached imported data: authenticate to Synapse with the project's organizational account and refresh in Desktop to populate it. The alternative [live-connected report](powerbi/rpt_print_event_kpis_daily.pbip) uses the already-refreshed online semantic model and requires Power BI sign-in/access.
 
-```text
-Name:          tr_daily_machine_api_schedule_1200_bkk
-Type:          Schedule
-Frequency:     Daily at 12:00
-Time zone:     SE Asia Standard Time
-Runtime state: Started
-```
+See [export script](powerbi/export-report-definition.ps1); use `-IncludeSemanticModel` to export a complete local project. Existing exports are preserved under distinct names. PBIX REST export was rejected by the service for this PremiumFiles model; PBIP is the project-definition alternative used here.
 
-The trigger passes its scheduled time as `window_end_utc` and derives
-`window_start_utc` by subtracting 24 hours.
+Measure definitions are in [DAX](semantic/dax-measures.dax) and [TMDL](semantic/semantic-model.tmdl). Count/rate measures aggregate totals. QR grade and absolute position-error measures now weight each Gold group mean by its event count. The old measure names containing `Average Daily` are retained for visual compatibility; they represent an event-weighted average over the selected dates, not an equal-weight average of days. Legacy Silver had no null values for either metric, and v2 rejects nulls. Results inherit the four-decimal precision of the stored group means.
 
-## 7. Gold reporting schema
+## 7. Monitoring and cost
 
-Verified fields exposed by `vw_gold_print_event_kpis_daily`:
+- ADF failure alert `ar-qr-adf-pipeline-failed` remains enabled and notification-only. Missing expected data, failed quality validation or count reconciliation now fails the SQL activity, so these no longer silently pass this alert.
+- Power BI retains failure email on its Monday/Thursday 13:00 schedule.
+- The Function's Application Insights smart detector is not a scheduled-delivery freshness check. Missing source is detected at the following ADF run. A stopped ADF trigger or an alert-delivery outage is not covered by that check.
+- The historical USD 10/month Azure budget is an alert target, not a hard spending cap; current spend/budget state was not revalidated during remediation.
+- Serverless SQL only; no Spark/Dedicated SQL pool. Old snapshots and failed candidates are retained for recovery; storage cleanup is a separate maintenance decision.
 
-| Field | Meaning |
-|---|---|
-| `event_date` | KPI date |
-| `machine_id` | Machine identifier |
-| `product_id` | Product identifier |
-| `product_name` | Product name |
-| `total_events` | Total print events |
-| `printed_events` | Printed-event count from Gold |
-| `successful_events` | Successful events |
-| `rejected_events` | Rejected events |
-| `failed_events` | Failed events |
-| `qr_read_failures` | QR-read failure count |
-| `success_rate_pct` | Gold success-rate percentage |
-| `reject_rate_pct` | Gold reject-rate percentage |
-| `avg_qr_grade_score` | Average QR grade score |
-| `avg_abs_position_error_mm` | Average absolute position error in millimetres |
-| `first_event_ts` | First event timestamp in the group |
-| `last_event_ts` | Last event timestamp in the group |
-| `gold_loaded_utc` | Gold load timestamp |
+## 8. Progress and source control
 
-## 8. Power BI implementation
+| # | Work | Status |
+|---:|---|---|
+| 1 | Windows cloud access | Verified Azure, Storage, SQL and Power BI APIs |
+| 2 | Wrong-folder / empty-success defect | Corrected; recovered August 31 and September 2 |
+| 3 | Gold freshness | Latest business date September 2; 95,040 events after recovery |
+| 4 | Rerun safety | Validated date replacement; duplicate reporting grains = 0 |
+| 5 | Failure detection | Missing-source negative test raises error 50003 without changing published totals |
+| 6 | Scheduling | ADF Mon/Thu 12:30; BI Mon/Thu 13:00 |
+| 7 | Local Git | Recovered existing GitHub history; private backups/handover excluded; no push performed |
 
-### Workspace
+The detailed dated evidence, remaining operational limitations and next checkpoint stay in the existing local `CURRENT_STATUS.md`. The next unattended run must still be observed; manual verification is not proof of future unattended operation.
 
-```text
-syn-qr-de-native-ui-740561
-```
+Never commit access tokens, credentials, local settings, private backups, or cached report data. Git history was restored from the existing [GitHub repository](https://github.com/Tuaaut/Azure-Native-Data-Engineering-UI) without replacing the copied working files.
 
-Workspace description:
+## 9. References
 
-```text
-Power BI reporting workspace for the Azure-native QR data engineering demo using Synapse Serverless SQL Gold KPIs.
-```
-
-### Semantic model
-
-```text
-sm_gold_print_event_kpis_daily
-```
-
-Source table:
-
-```text
-vw_gold_print_event_kpis_daily
-```
-
-Storage mode:
-
-```text
-Import
-```
-
-Display folder for custom measures:
-
-```text
-DAX Measures
-```
-
-### DAX measures
-
-Reusable semantic-model artifacts:
-
-- [`dax-measures.dax`](semantic/dax-measures.dax) — executable validation query
-  containing all seven measure definitions.
-- [`semantic-model.tmdl`](semantic/semantic-model.tmdl) — showcase TMDL
-  representation including formats and the `DAX Measures` display folder.
-
-```DAX
-Total Events =
-SUM ( vw_gold_print_event_kpis_daily[total_events] )
-
-Successful Events =
-SUM ( vw_gold_print_event_kpis_daily[successful_events] )
-
-Rejected Events =
-SUM ( vw_gold_print_event_kpis_daily[rejected_events] )
-
-Success Rate % =
-DIVIDE ( [Successful Events], [Total Events], 0 )
-
-Reject Rate % =
-DIVIDE ( [Rejected Events], [Total Events], 0 )
-
-Average Daily QR Grade Score =
-AVERAGE ( vw_gold_print_event_kpis_daily[avg_qr_grade_score] )
-
-Average Daily Position Error (mm) =
-AVERAGE ( vw_gold_print_event_kpis_daily[avg_abs_position_error_mm] )
-```
-
-Formatting:
-
-- Count measures: whole number with thousands separator.
-- Rate measures: percentage with two decimal places.
-- QR grade score: decimal.
-- Position error: decimal in millimetres.
-
-### Report
-
-```text
-rpt_print_event_kpis_daily
-```
-
-Report design: one-page **Print Event Operations Overview**
-
-Layout:
-
-1. Report title.
-2. Operational KPI cards.
-3. Quality KPI cards.
-4. Clustered column chart: Successful vs Rejected Events by Date.
-5. Daily detail table at the bottom.
-
-Visual standards:
-
-- Font: Segoe UI
-- Dark report theme
-- Successful events: `#34A853`
-- Rejected events: `#E15759`
-- Exact data labels with no automatic `K` abbreviation
-- Categorical date axis
-
-## 9. Report output
-
-The report and lineage are published in the Power BI workspace. KPI totals and
-available event dates evolve automatically as scheduled source deliveries are
-processed.
-
-![Power BI Print Event Operations Overview](docs/images/power-bi-report.jpg)
-
-*Power BI Reading view illustrating the report layout. Values in the live
-report reflect the latest successfully processed Gold partitions.*
-
-The report presents total, successful, and rejected events; success and reject
-rates; QR quality indicators; daily comparisons; and machine/product detail.
-
-## 10. Daily orchestration
-
-The automated sequence uses Bangkok time:
-
-```text
-11:45  Azure Function writes the shared source JSON
-12:00  ADF copies the latest source window and invokes Synapse Serverless SQL
-12:30  Power BI refreshes sm_gold_print_event_kpis_daily
-```
-
-The ADF pipeline executes two ordered activities:
-
-1. `Copy_machine_api_json_to_raw`
-2. `Run_synapse_incremental_medallion`, after the copy succeeds
-
-The Power BI semantic model uses Import storage mode and has a daily 12:30
-schedule in `SE Asia Standard Time`, with failure email enabled.
-
-### Failure observability
-
-The Azure-native workflow uses email-only, notification-only monitoring:
-
-| Scope | Alert rule | Condition | Notification |
-|---|---|---|---|
-| Shared source Function `func-qr-daily-740561` | `ar-qr-function-no-execution-24h` | Total `FunctionExecutionCount < 1` over 24 hours, evaluated every 5 minutes | `ag-qr-function-email-alerts` |
-| Shared source Application Insights `appi-qr-shared-source-observability` | `ar-qr-shared-source-dq-failed` | Count of `QR_SHARED_SOURCE_DQ_FAIL` log rows greater than 0 over 15 minutes, evaluated every 15 minutes | `ag-qr-function-email-alerts` |
-| ADF pipeline `pl_ingest_machine_api_json` | `ar-qr-adf-pipeline-failed` | Total failed pipeline runs greater than 0 over 5 minutes, evaluated every 5 minutes | `ag-qr-adf-email-alerts` |
-
-The shared Function validates each generated payload against one upstream
-contract before writing it to ADLS: the expected business date, a non-empty
-`print_events` array with a matching declared record count, required event
-fields, and valid unique `event_id` values. Validation failures are combined
-into one `QR_SHARED_SOURCE_DQ_FAIL` log entry. The payload is still written for
-lineage; monitoring is notification-only and does not block either downstream
-project.
-
-All three rules are enabled at severity 2. They send email notifications only
-and do not retry, rerun, or backfill the Function, ADF pipeline, or Synapse work.
-
-## 11. Cost controls
-
-- Azure budget: USD 10/month.
-- Synapse Serverless SQL only.
-- No Spark pool.
-- No Dedicated SQL pool.
-- Parquet used after Raw to reduce scanned data.
-- Daily ADF schedule at 12:00 Asia/Bangkok.
-- Daily Power BI semantic-model refresh at 12:30 Asia/Bangkok.
-- No Power BI app creation for the MVP.
-
-## 12. Security and GitHub readiness
-
-Do not commit:
-
-- Subscription IDs
-- Access keys
-- SAS tokens
-- Connection strings
-- Credentials
-- Local browser/session data
-
-Current repository structure:
-
-```text
-Azure-Native-Data-Engineering-UI/
-├── README.md
-├── sql/
-│   ├── 00_setup_serverless_objects.sql
-│   ├── 01_inspect_raw_json.sql
-│   ├── 02_parse_print_events.sql
-│   ├── 03_create_bronze_parquet.sql
-│   ├── 04_create_silver_parquet.sql
-│   ├── 05_create_gold_parquet.sql
-│   ├── 06_create_gold_reporting_view.sql
-│   ├── 07_incremental_partition_template.sql
-│   └── 08_create_scalable_gold_view.sql
-├── semantic/
-│   ├── dax-measures.dax
-│   └── semantic-model.tmdl
-├── docs/
-│   └── images/
-│       ├── business-flow.svg
-│       ├── power-bi-report.jpg
-│       └── technical-flow.svg
-```
-
-## 13. Completion checklist
-
-- [x] Resource group and budget
-- [x] ADLS Gen2 and medallion folders
-- [x] ADF ingestion pipeline
-- [x] Timestamped Raw JSON ingestion
-- [x] Raw JSON inspection
-- [x] `print_events` parsing with `OPENJSON`
-- [x] Bronze Parquet
-- [x] Silver Parquet
-- [x] Gold Parquet
-- [x] Gold reporting view
-- [x] Synapse-to-Power BI linked service
-- [x] Power BI semantic model
-- [x] Seven DAX measures grouped in `DAX Measures`
-- [x] One-page Power BI operations report
-- [x] Reading view validation
-- [x] Lineage validation
-- [x] Add showcase Synapse SQL scripts
-- [x] Add DAX and TMDL semantic-model scripts
-- [x] Add Business and Technical SVG architecture diagrams
-- [x] Parameterize ADF ingestion by source last-modified UTC window
-- [x] Enable the daily ADF schedule with parameter mapping
-- [x] Add incremental date-partition template
-- [x] Deploy the incremental Synapse medallion procedure
-- [x] Create stable recursive Gold reporting view
-- [x] Configure the daily Power BI semantic-model refresh
-- [x] Configure email-only Function and ADF failure observability
-- [x] Review for secrets, initialize Git, and publish the repository
-
-## 14. Technical references
-
-- [Query data storage with Synapse Serverless SQL](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/query-data-storage)
-- [CREATE EXTERNAL TABLE AS SELECT (CETAS) in Synapse SQL](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/develop-tables-cetas)
-- [Store query results from a serverless SQL pool](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/create-external-table-as-select)
-- [Tabular Model Definition Language (TMDL)](https://learn.microsoft.com/en-us/analysis-services/tmdl/tmdl-overview)
+- [Serverless JSON queries](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/query-json-files)
+- [CETAS](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql/develop-tables-cetas)
+- [Power BI project files](https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-overview)

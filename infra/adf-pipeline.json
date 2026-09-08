@@ -1,0 +1,126 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "dependsOn": [],
+        "inputs": [
+          {
+            "parameters": {},
+            "referenceName": "ds_source_machine_api_json",
+            "type": "DatasetReference"
+          }
+        ],
+        "name": "Copy_machine_api_json_to_raw",
+        "outputs": [
+          {
+            "parameters": {},
+            "referenceName": "ds_sink_raw_machine_api_json",
+            "type": "DatasetReference"
+          }
+        ],
+        "policy": {
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false,
+          "timeout": "0.00:10:00"
+        },
+        "type": "Copy",
+        "typeProperties": {
+          "enableStaging": false,
+          "sink": {
+            "formatSettings": {
+              "type": "JsonWriteSettings"
+            },
+            "storeSettings": {
+              "copyBehavior": "PreserveHierarchy",
+              "type": "AzureBlobFSWriteSettings"
+            },
+            "type": "JsonSink"
+          },
+          "source": {
+            "formatSettings": {
+              "type": "JsonReadSettings"
+            },
+            "storeSettings": {
+              "enablePartitionDiscovery": false,
+              "modifiedDatetimeEnd": {
+                "type": "Expression",
+                "value": "@pipeline().parameters.window_end_utc"
+              },
+              "modifiedDatetimeStart": {
+                "type": "Expression",
+                "value": "@pipeline().parameters.window_start_utc"
+              },
+              "recursive": true,
+              "type": "AzureBlobFSReadSettings",
+              "wildcardFileName": "machine_api_response.json",
+              "wildcardFolderPath": "landing/machine_api/*"
+            },
+            "type": "JsonSource"
+          }
+        },
+        "userProperties": []
+      },
+      {
+        "dependsOn": [
+          {
+            "activity": "Copy_machine_api_json_to_raw",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "description": "Runs Synapse Serverless SQL to transform the latest raw JSON into Bronze, Silver, and Gold layers.",
+        "linkedServiceName": {
+          "referenceName": "ls_synapse_serverless_qr_native",
+          "type": "LinkedServiceReference"
+        },
+        "name": "Run_synapse_incremental_medallion",
+        "policy": {
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false,
+          "timeout": "0.00:15:00"
+        },
+        "type": "Script",
+        "typeProperties": {
+          "scriptBlockExecutionTimeout": "00:15:00",
+          "scripts": [
+            {
+              "parameters": [
+                {
+                  "direction": "Input",
+                  "name": "window_end_utc",
+                  "type": "String",
+                  "value": {
+                    "type": "Expression",
+                    "value": "@pipeline().parameters.window_end_utc"
+                  }
+                }
+              ],
+              "text": "EXEC dbo.usp_process_machine_api_incremental\n    @window_end_utc = @window_end_utc;",
+              "type": "NonQuery"
+            }
+          ]
+        },
+        "userProperties": []
+      }
+    ],
+    "annotations": [],
+    "description": "Copy actual source folders, validate expected business-date events, and publish one validated date replacement. Missing or invalid source fails the run; repeated dates do not double-count.",
+    "parameters": {
+      "window_end_utc": {
+        "type": "string"
+      },
+      "window_start_utc": {
+        "type": "string"
+      }
+    },
+    "policy": {
+      "elapsedTimeMetric": {}
+    },
+    "concurrency": 1
+  }
+}

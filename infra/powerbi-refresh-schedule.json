@@ -1,0 +1,14 @@
+{
+  "value": {
+    "enabled": true,
+    "times": [
+      "13:00"
+    ],
+    "notifyOption": "MailOnFailure",
+    "localTimeZoneId": "SE Asia Standard Time",
+    "days": [
+      "Monday",
+      "Thursday"
+    ]
+  }
+}

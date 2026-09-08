@@ -1,0 +1,16 @@
+[
+  {
+    "config": {
+      "bindings": [
+        {
+          "direction": "in",
+          "name": "timer",
+          "schedule": "0 0 5 * * 1,4",
+          "type": "timerTrigger"
+        }
+      ],
+      "scriptFile": "__init__.py"
+    },
+    "name": "func-qr-de-native-gen-740561/generate_machine_api"
+  }
+]

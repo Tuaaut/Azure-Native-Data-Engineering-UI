@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "description": "Runs the ingest+medallion pipeline twice a week (Mon & Thu 12:30 Asia/Bangkok), 30 min after func-qr-de-native-gen-740561 drops the day's JSON into landing/.",
+    "pipelines": [
+      {
+        "parameters": {
+          "window_end_utc": "@trigger().scheduledTime",
+          "window_start_utc": "@addDays(trigger().scheduledTime, -4)"
+        },
+        "pipelineReference": {
+          "referenceName": "pl_ingest_machine_api_json",
+          "type": "PipelineReference"
+        }
+      }
+    ],
+    "runtimeState": "Started",
+    "type": "ScheduleTrigger",
+    "typeProperties": {
+      "recurrence": {
+        "frequency": "Week",
+        "interval": 1,
+        "schedule": {
+          "hours": [
+            12
+          ],
+          "minutes": [
+            30
+          ],
+          "weekDays": [
+            "Monday",
+            "Thursday"
+          ]
+        },
+        "startTime": "2026-08-03T11:59:00",
+        "timeZone": "SE Asia Standard Time"
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "annotations": [],
+    "description": "Machine API JSON landing zone in the native data lake (self-contained; replaced the retired external qrdbx06162114 source).",
+    "linkedServiceName": {
+      "referenceName": "ls_adls_sink_native",
+      "type": "LinkedServiceReference"
+    },
+    "schema": {},
+    "type": "Json",
+    "typeProperties": {
+      "location": {
+        "fileSystem": "datalake",
+        "folderPath": "landing/machine_api",
+        "type": "AzureBlobFSLocation"
+      }
+    }
+  }
+}

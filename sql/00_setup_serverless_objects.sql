@@ -1,49 +1,26 @@
-/*
-Azure-Native Data Engineering UI
-Showcase export of the Synapse Serverless SQL setup performed through the UI.
-
-Run once in a user database such as qr_native_demo.
-Never commit a real master-key password, SAS token, or storage key.
-The Synapse workspace managed identity requires Storage Blob Data Reader/
-Contributor access appropriate to the operations performed.
-*/
-
--- Create the database from the master database if it does not already exist:
--- CREATE DATABASE qr_native_demo;
--- GO
--- USE qr_native_demo;
--- GO
-
--- A database master key is required before creating a database-scoped credential.
--- Run once with a secret supplied outside source control:
--- CREATE MASTER KEY ENCRYPTION BY PASSWORD = '<SUPPLY_SECURE_PASSWORD_AT_RUNTIME>';
--- GO
-
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.database_scoped_credentials
-    WHERE name = 'WorkspaceIdentity'
-)
+IF DB_ID('qr_native_lakehouse') IS NULL
 BEGIN
     EXEC (
-        'CREATE DATABASE SCOPED CREDENTIAL WorkspaceIdentity
-         WITH IDENTITY = ''Managed Identity'';'
+        'CREATE DATABASE qr_native_lakehouse
+         COLLATE Latin1_General_100_BIN2_UTF8'
     );
 END;
+GO
+
+USE qr_native_lakehouse;
 GO
 
 IF NOT EXISTS (
     SELECT 1
     FROM sys.external_data_sources
-    WHERE name = 'DataLake'
+    WHERE name = 'ds_datalake'
 )
 BEGIN
     EXEC (
-        'CREATE EXTERNAL DATA SOURCE DataLake
+        'CREATE EXTERNAL DATA SOURCE ds_datalake
          WITH (
-             LOCATION = ''abfss://datalake@stqrdenativeui740561.dfs.core.windows.net'',
-             CREDENTIAL = WorkspaceIdentity
-         );'
+             LOCATION = ''https://stqrdenativeui740561.dfs.core.windows.net/datalake''
+         )'
     );
 END;
 GO
@@ -51,21 +28,22 @@ GO
 IF NOT EXISTS (
     SELECT 1
     FROM sys.external_file_formats
-    WHERE name = 'ParquetFormat'
+    WHERE name = 'ff_parquet'
 )
 BEGIN
     EXEC (
-        'CREATE EXTERNAL FILE FORMAT ParquetFormat
-         WITH (FORMAT_TYPE = PARQUET);'
+        'CREATE EXTERNAL FILE FORMAT ff_parquet
+         WITH (FORMAT_TYPE = PARQUET)'
     );
 END;
 GO
 
-SELECT name, location, type_desc
+SELECT DB_NAME() AS database_name;
+
+SELECT name, location
 FROM sys.external_data_sources
-WHERE name = 'DataLake';
+WHERE name = 'ds_datalake';
 
 SELECT name, format_type
 FROM sys.external_file_formats
-WHERE name = 'ParquetFormat';
-
+WHERE name = 'ff_parquet';

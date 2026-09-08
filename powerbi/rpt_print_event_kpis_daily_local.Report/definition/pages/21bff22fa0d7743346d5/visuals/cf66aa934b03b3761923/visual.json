@@ -1,0 +1,205 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "cf66aa934b03b3761923",
+  "position": {
+    "x": 16.666666666666668,
+    "y": 96.666666666666671,
+    "z": 0,
+    "height": 133.33333333333334,
+    "width": 1250,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Total Events"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Total Events",
+              "nativeQueryRef": "Total Events"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Successful Events"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Successful Events",
+              "nativeQueryRef": "Successful Events"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Rejected Events"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Rejected Events",
+              "nativeQueryRef": "Rejected Events"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Success Rate %"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Success Rate %",
+              "nativeQueryRef": "Success Rate %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Reject Rate %"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Reject Rate %",
+              "nativeQueryRef": "Reject Rate %"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "vw_gold_print_event_kpis_daily"
+                  }
+                },
+                "Property": "Total Events"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "smallMultiplesHeader": [
+        {
+          "properties": {
+            "displayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_gold_print_event_kpis_daily.Total Events"
+          }
+        },
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_gold_print_event_kpis_daily.Successful Events"
+          }
+        },
+        {
+          "properties": {
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "layout": [
+        {
+          "properties": {
+            "columnCount": {
+              "expr": {
+                "Literal": {
+                  "Value": "5L"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "852bb34d2d3b81ba4d71",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_gold_print_event_kpis_daily"
+              }
+            },
+            "Property": "Total Events"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

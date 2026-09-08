@@ -1,0 +1,101 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "b235eb75b101b108c513",
+  "position": {
+    "x": 13.333333333333334,
+    "y": 223.33333333333334,
+    "z": 1,
+    "height": 140,
+    "width": 1253.3333333333335,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Average Daily QR Grade Score"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Average Daily QR Grade Score",
+              "nativeQueryRef": "Average Daily QR Grade Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_gold_print_event_kpis_daily"
+                    }
+                  },
+                  "Property": "Average Daily Position Error (mm)"
+                }
+              },
+              "queryRef": "vw_gold_print_event_kpis_daily.Average Daily Position Error (mm)",
+              "nativeQueryRef": "Average Daily Position Error (mm)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "vw_gold_print_event_kpis_daily"
+                  }
+                },
+                "Property": "Average Daily QR Grade Score"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "layout": [
+        {
+          "properties": {
+            "columnCount": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "value": [
+        {
+          "properties": {
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
+  "version": "4.0",
+  "datasetReference": {
+    "byConnection": {
+      "connectionString": "Data Source=powerbi://api.powerbi.com/v1.0/myorg/syn-qr-de-native-ui-740561;initial catalog=sm_gold_print_event_kpis_daily;integrated security=ClaimsToken;semanticmodelid=f3f6f6e3-4c30-4153-94c9-f42198a66a5b"
+    }
+  }
+}

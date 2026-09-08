@@ -1,0 +1,10 @@
+CURRENT_STATUS.md
+.env
+.env.*
+!.env.example
+private/
+powerbi/*.pbix
+powerbi/*.pbit
+**/.pbi/
+**/localSettings.json
+__pycache__/
