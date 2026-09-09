@@ -29,6 +29,46 @@ ADF's legacy trigger name is still `tr_daily_machine_api_schedule_1200_bkk`; its
 
 ADF concurrency is one. Copy has a 10-minute timeout; transformation has a 15-minute timeout. The BI schedule is intentionally later, but it is still time-based, not an ADF success dependency: a delayed/failed pipeline can leave Power BI showing the last valid snapshot.
 
+### Another project depends on this one
+
+> **Do not delete `rg-qr-de-native-demo-UI`, `stqrdenativeui740561` or
+> `func-qr-de-native-gen-740561` without first repointing the consumer below.**
+
+[Microsoft-Fabric-QR-Data-Engineering-UI](https://github.com/Tuaaut/microsoft-fabric-qr-data-engineering-ui)
+has no generator and no storage account of its own. It reads this project's lake
+through a OneLake shortcut:
+
+```text
+func-qr-de-native-gen-740561  (Mon/Thu 12:00)
+        writes JSON to
+stqrdenativeui740561 / datalake / landing/machine_api/
+        ADF pl_ingest_machine_api_json copies to
+stqrdenativeui740561 / datalake / raw/machine_api/
+        ├──> this project: Synapse Serverless -> Bronze/Silver/Gold -> Power BI
+        └──> Microsoft-Fabric-QR-Data-Engineering-UI:
+             OneLake shortcut Files/sc_source_machine_api_json
+             via Fabric connection conn_adls_stqrdenativeui740561_datalake
+```
+
+This has already failed once for exactly this reason. Until 2026-08-31 both
+projects read a shared lake in `rg-qr-dbx-demo`; that resource group was deleted
+without checking who consumed it, and the Fabric pipeline's scheduled runs on
+2026-09-01 and 09-02 failed with `2451` / `ExternalStorageAccountNotFound`. The
+shortcut was repointed here on 2026-09-02, which is why this project is now the
+upstream for both.
+
+Two consequences worth remembering:
+
+- the Fabric project's freshness depends on this project's generator and Copy
+  succeeding, so an incident here surfaces there too
+- rotating the account key on `stqrdenativeui740561` breaks the Fabric
+  connection, because that connection holds the key; update the connection
+  credential in the same change
+
+For contrast, `Azure-Serverless-Operations-Analytics` (private) covers the same
+business domain and the same source contract but is fully self-contained on
+`stasoanalyticswora`, with nothing else reading it.
+
 ## 3. Data and publication contract
 
 ```text
